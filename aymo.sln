@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33627.172
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aymo", "aymo.vcxproj", "{38897275-3F08-4209-91AE-6A5B1A9AB8EA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{38897275-3F08-4209-91AE-6A5B1A9AB8EA}.Debug|x64.ActiveCfg = Debug|x64
+		{38897275-3F08-4209-91AE-6A5B1A9AB8EA}.Debug|x64.Build.0 = Debug|x64
+		{38897275-3F08-4209-91AE-6A5B1A9AB8EA}.Release|x64.ActiveCfg = Release|x64
+		{38897275-3F08-4209-91AE-6A5B1A9AB8EA}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1995F2E8-1A7B-418B-97B6-CCF3B45885ED}
+	EndGlobalSection
+EndGlobal
