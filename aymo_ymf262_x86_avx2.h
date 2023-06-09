@@ -708,7 +708,6 @@ struct aymo_(chip) {
 
     // 64-bit data
     uint64_t eg_timer;
-    uint64_t rq_timestamp;
 
     // 32-bit data
     uint32_t rq_delay;
