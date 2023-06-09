@@ -931,7 +931,7 @@ void aymo_(ch2x_update_fnum)(struct aymo_(chip)* chip, int8_t ch2x, int8_t ch2p)
     aymo_(pg_update_fnum)(chip, ch2x_word0, pg_fnum, eg_ksv, pg_block);
     aymo_(pg_update_fnum)(chip, ch2x_word1, pg_fnum, eg_ksv, pg_block);
 
-    if (ch2p > 0) {
+    if (ch2p >= 0) {
         int8_t ch2p_word0 = aymo_(ch2x_to_word)[ch2p][0];
         int8_t ch2p_word1 = aymo_(ch2x_to_word)[ch2p][1];
         aymo_(pg_update_fnum)(chip, ch2p_word0, pg_fnum, eg_ksv, pg_block);
@@ -1402,13 +1402,16 @@ void aymo_(write_A0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     if (chip->chip_regs.reg_105h.newm && ch2x_is_pairing && ch2x_is_secondary) {
         return;
     }
+    if (!ch2x_is_pairing || ch2x_is_secondary) {
+        ch2p = -1;
+    }
 
     struct aymo_(reg_A0h)* reg_A0h = &(chip->ch2x_regs[ch2x].reg_A0h);
     //struct aymo_(reg_A0h) reg_A0h_prev = *reg_A0h;
     *(uint8_t*)(void*)reg_A0h = value;
 
     {//if (reg_A0h->fnum_lo != reg_A0h_prev.fnum_lo) {
-        aymo_(ch2x_update_fnum)(chip, ch2x, (ch2x_is_secondary ? -1 : (int8_t)ch2p));
+        aymo_(ch2x_update_fnum)(chip, ch2x, ch2p);
     }
 }
 
@@ -1422,6 +1425,9 @@ void aymo_(write_B0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     int ch2x_is_secondary = (ch2p < ch2x);
     if (chip->chip_regs.reg_105h.newm && ch2x_is_pairing && ch2x_is_secondary) {
         return;
+    }
+    if (!ch2x_is_pairing || ch2x_is_secondary) {
+        ch2p = -1;
     }
 
     if (address == 0xBD) {
@@ -1439,7 +1445,7 @@ void aymo_(write_B0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
         *(uint8_t*)(void*)reg_B0h = value;
 
         {//if ((reg_B0h->fnum_hi != reg_B0h_prev.fnum_hi) || (reg_B0h->block != reg_B0h_prev.block)) {
-            aymo_(ch2x_update_fnum)(chip, ch2x, (ch2x_is_secondary ? -1 : ch2p));
+            aymo_(ch2x_update_fnum)(chip, ch2x, ch2p);
         }
 
         {//if (reg_B0h->kon != reg_B0h_prev.kon) {
