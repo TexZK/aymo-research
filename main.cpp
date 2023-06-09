@@ -82,7 +82,7 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     const opl3_slot* ns = &nuked_chip->slot[slot];
 
     // TODO: Commented stuff
-    assert(vextractn(sg->eg_out, sgo) == ns->out);
+    assert(vextractn(sg->wg_out, sgo) == ns->out);
     //assert(vextractn(sg->wg_fbmod, sgo) == ns->fbmod);
     //assert(vextractn(sg->wg_mod, sgo) == *ns->mod);
     assert(vextractn(sg->wg_prout, sgo) == ns->prout);
@@ -93,15 +93,15 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     //assert(vextractn(sg->eg_rate, sgo) == ns->eg_rate);
     //assert(vextractn(sg->eg_ksl, sgo) == ns->eg_ksl);
     //assert(vextractn(sg->eg_trem, sgo) == *ns->trem);
-    assert(-vextractn(sg->pg_vib, sgo) == ns->reg_vib);
+    assert((uint16_t)-vextractn(sg->pg_vib, sgo) == ns->reg_vib);
     //assert(vextractn(sg->eg_egt, sgo) == ns->reg_type);
     //assert(vextractn(sg->eg_ksr, sgo) == ns->reg_ksr);
     assert((uint16_t)vextractn(sg->pg_mult_x2, sgo) == mt[ns->reg_mult]);
     assert((uint16_t)vextractn(sg->eg_tl_x4, sgo) == ns->reg_tl * 4U);
-    assert((uint16_t)((vextractn(sg->eg_adsr, sgo) / AYMO_(EG_GEN_MULLO_ATTACK)) & 15) == ns->reg_ar);
-    assert((uint16_t)((vextractn(sg->eg_adsr, sgo) / AYMO_(EG_GEN_MULLO_DECAY)) & 15) == ns->reg_dr);
+    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >> 12) & 15) == ns->reg_ar);
+    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >>  8) & 15) == ns->reg_dr);
     assert((uint16_t)vextractn(sg->eg_sl, sgo) == ns->reg_sl);
-    assert((uint16_t)((vextractn(sg->eg_adsr, sgo) / AYMO_(EG_GEN_MULLO_RELEASE)) & 15) == ns->reg_rr);
+    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >>  0) & 15) == ns->reg_rr);
     //assert(vextractn(sg->wg_wf, sgo) == ns->reg_wf);
     assert((uint16_t)vextractn(sg->eg_key, sgo) == ns->key);
     assert((uint16_t)-vextractn(sg->pg_notreset, sgo) == !ns->pg_reset);

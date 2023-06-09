@@ -1652,6 +1652,8 @@ void aymo_(init)(struct aymo_(chip)* chip)
         sg->eg_out = vset1(0x01FF);
         sg->eg_gen = vset1(AYMO_(EG_GEN_RELEASE));
         sg->eg_gen_mullo = vset1(AYMO_(EG_GEN_MULLO_RELEASE));
+        sg->pg_notreset = vset1(-1);
+        sg->pg_mult_x2 = vset1(aymo_(pg_mult_x2_table)[0]);
     }
 
     // Initialize channels
