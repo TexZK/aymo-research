@@ -26,7 +26,8 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #include "imf.h"
 #include "opl3.h"
 
-#include <cassert>
+//#include <cassert>//XXX
+#define assert(c) {if(!(c))__debugbreak();}//XXX
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
@@ -68,46 +69,50 @@ static const uint8_t mt[16] = {
 };
 
 
-void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip, int8_t slot)
+void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip, int8_t slot_)
 {
-    if (slot >= 36) {
+    if (slot_ >= 36) {
         return;
     }
 
-    int8_t word = aymo_(slot_to_word)[slot];
+    int8_t word = aymo_(slot_to_word)[slot_];
     int8_t sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
     int8_t sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
     int8_t cgi = (sgi / 2);
     const struct aymo_(slot_group)* sg = &aymo_chip->sg[sgi];
-    const opl3_slot* ns = &nuked_chip->slot[slot];
+    const struct aymo_(ch2x_group)* cg = &aymo_chip->cg[cgi];
+    const opl3_slot* slot = &nuked_chip->slot[slot_];
+    (void)cg;
 
     // TODO: Commented stuff
-    assert(vextractn(sg->wg_out, sgo) == ns->out);
-    //assert(vextractn(sg->wg_fbmod, sgo) == ns->fbmod);
-    //assert(vextractn(sg->wg_mod, sgo) == *ns->mod);
-    assert(vextractn(sg->wg_prout, sgo) == ns->prout);
-    assert((uint16_t)vextractn(sg->eg_rout, sgo) == ns->eg_rout);
-    assert((uint16_t)vextractn(sg->eg_out, sgo) == ns->eg_out);
-    //assert((uint16_t)vextractn(sg->eg_inc, sgo) == ns->eg_inc);
-    assert((uint16_t)vextractn(sg->eg_gen, sgo) == ns->eg_gen);
-    //assert(vextractn(sg->eg_rate, sgo) == ns->eg_rate);
-    //assert(vextractn(sg->eg_ksl, sgo) == ns->eg_ksl);
-    //assert(vextractn(sg->eg_trem, sgo) == *ns->trem);
-    assert((uint16_t)-vextractn(sg->pg_vib, sgo) == ns->reg_vib);
-    //assert(vextractn(sg->eg_egt, sgo) == ns->reg_type);
-    //assert(vextractn(sg->eg_ksr, sgo) == ns->reg_ksr);
-    assert((uint16_t)vextractn(sg->pg_mult_x2, sgo) == mt[ns->reg_mult]);
-    assert((uint16_t)vextractn(sg->eg_tl_x4, sgo) == ns->reg_tl * 4U);
-    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >> 12) & 15) == ns->reg_ar);
-    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >>  8) & 15) == ns->reg_dr);
-    assert((uint16_t)vextractn(sg->eg_sl, sgo) == ns->reg_sl);
-    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >>  0) & 15) == ns->reg_rr);
-    //assert(vextractn(sg->wg_wf, sgo) == ns->reg_wf);
-    assert((uint16_t)vextractn(sg->eg_key, sgo) == ns->key);
-    assert((uint16_t)-vextractn(sg->pg_notreset, sgo) == !ns->pg_reset);
-    assert((uint16_t)vextractn(sg->pg_phase_lo, sgo) == (ns->pg_phase & 0xFFFFUL));
-    assert((uint16_t)vextractn(sg->pg_phase_hi, sgo) == (ns->pg_phase >> 16));
-    assert((uint16_t)vextractn(sg->pg_phase_out, sgo) == ns->pg_phase_out);
+    assert(vextractn(sg->wg_out, sgo) == slot->out);
+    //assert(vextractn(sg->wg_fbmod, sgo) == slot->fbmod);
+    //assert(vextractn(sg->wg_mod, sgo) == *slot->mod);
+    assert(vextractn(sg->wg_prout, sgo) == slot->prout);
+    assert((uint16_t)vextractn(sg->eg_rout, sgo) == slot->eg_rout);
+    assert((uint16_t)vextractn(sg->eg_out, sgo) == slot->eg_out);
+    //assert((uint16_t)vextractn(sg->eg_inc, sgo) == slot->eg_inc);
+    assert((uint16_t)vextractn(sg->eg_gen, sgo) == slot->eg_gen);
+    //assert(vextractn(sg->eg_rate, sgo) == slot->eg_rate);
+    //assert(vextractn(sg->eg_ksl, sgo) == slot->eg_ksl);
+    //assert(vextractn(sg->eg_trem, sgo) == *slot->trem);
+    assert((uint16_t)-vextractn(sg->pg_vib, sgo) == slot->reg_vib);
+    //assert(vextractn(sg->eg_egt, sgo) == slot->reg_type);
+    //assert(vextractn(sg->eg_ksr, sgo) == slot->reg_ksr);
+    assert((uint16_t)vextractn(sg->pg_mult_x2, sgo) == mt[slot->reg_mult]);
+    assert((uint16_t)vextractn(sg->eg_tl_x4, sgo) == slot->reg_tl * 4U);
+    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >> 12) & 15) == slot->reg_ar);
+    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >>  8) & 15) == slot->reg_dr);
+    assert((uint16_t)vextractn(sg->eg_sl, sgo) == slot->reg_sl);
+    assert((((uint16_t)vextractn(sg->eg_adsr, sgo) >>  0) & 15) == slot->reg_rr);
+    //assert(vextractn(sg->wg_wf, sgo) == slot->reg_wf);
+    assert((uint16_t)vextractn(sg->eg_key, sgo) == slot->key);
+    assert((uint16_t)-vextractn(sg->pg_notreset, sgo) == !slot->pg_reset);
+    const int8_t sgo_side[16] = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1 };
+    const int8_t sgo_cell[16] = { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7 };
+    uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m256i_u32 : sg->pg_phase_lo.m256i_u32)[sgo_cell[sgo]];
+    assert(pg_phase == slot->pg_phase);
+    assert((uint16_t)vextractn(sg->pg_phase_out, sgo) == slot->pg_phase_out);
 }
 
 
@@ -122,14 +127,14 @@ void compare_ch2xs(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     int8_t sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
     int8_t cgi = (sgi / 2);
     const struct aymo_(ch2x_group)* cg = &aymo_chip->cg[cgi];
-    const opl3_channel* nc = &nuked_chip->channel[ch2x];
+    const opl3_channel* channel = &nuked_chip->channel[ch2x];
 
     // TODO: Commented stuff
     //int16_t* out[4];
     //uint8_t chtype;
-    assert((uint16_t)vextractn(cg->pg_fnum, sgo) == nc->f_num);
-    assert((uint16_t)vextractn(cg->pg_block, sgo) == nc->block);
-    //assert((uint16_t)vextractn(cg->fb, sgo) == nc->fb);
+    assert((uint16_t)vextractn(cg->pg_fnum, sgo) == channel->f_num);
+    assert((uint16_t)vextractn(cg->pg_block, sgo) == channel->block);
+    //assert((uint16_t)vextractn(cg->fb, sgo) == channel->fb);
     //uint8_t con;
     //uint8_t alg;
     //uint8_t ksv;
@@ -142,7 +147,7 @@ void compare_ch2xs(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
 void compare_chips(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip)
 {
     // TODO: Commented stuff
-    assert(aymo_chip->tm_timer == nuked_chip->timer);
+    assert((uint16_t)aymo_chip->tm_timer == nuked_chip->timer);
     assert((aymo_chip->eg_timer & AYMO_(EG_TIMER_MASK)) == nuked_chip->eg_timer);
     //assert((aymo_chip->eg_timerrem & AYMO_(EG_TIMER_MASK)) == nuked_chip->eg_timerrem);
     assert(aymo_chip->eg_state == nuked_chip->eg_state);
@@ -262,13 +267,13 @@ void imf_test_simple(void)
     struct imf_cmd cmd = { 0, 0, 1 };
     while (cmd.delaying < 2) {
         compare_chips(&aymo_chip, &nuked_chip);
-        OPL3_Generate4Ch(&nuked_chip, nuked_out);
         cmd = imf_opl_tick(&imf_status);
         if (cmd.address) {
             printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
-            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
             OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
+            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
         }
+        OPL3_Generate4Ch(&nuked_chip, nuked_out);
         aymo_(tick)(&aymo_chip);
         ofs.write(reinterpret_cast<const char*>(&aymo_chip.og_out_a), sizeof(int16_t));
         //ofs.write(reinterpret_cast<const char*>(&chip.og_out_b), sizeof(chip.og_out_b));
@@ -281,7 +286,7 @@ void imf_test_file(void)
 {
     std::string imf_buffer;
     {
-        std::string path = "IMF\\14 - Suspense.wlf";
+        std::string path = "IMF\\04 - Funkie Colonel Bill.wlf";
         //std::string path = "adlib_38.imf.wlf";
         std::ifstream ifs(path, std::ios::binary);
         std::stringstream ss;
@@ -292,7 +297,7 @@ void imf_test_file(void)
     imf_init(&imf_status, (uint32_t)imf_rate_wolfenstein_3d, (uint32_t)AYMO_(SAMPLE_RATE));
     uint8_t imf_type = imf_guess_type(imf_buffer.c_str(), imf_buffer.size());
     imf_load(&imf_status, imf_buffer.c_str(), imf_buffer.size(), imf_type);
-    std::ofstream ofs("adlib_38.raw", std::ios::out | std::ios::binary | std::ios::trunc);
+    std::ofstream ofs("file.raw", std::ios::out | std::ios::binary | std::ios::trunc);
 
     aymo_(init)(&aymo_chip);
 
@@ -301,13 +306,14 @@ void imf_test_file(void)
     
     struct imf_cmd cmd = { 0, 0, 1 };
     while (cmd.delaying < 2) {
-        OPL3_Generate4Ch(&nuked_chip, nuked_out);
+        compare_chips(&aymo_chip, &nuked_chip);
         cmd = imf_opl_tick(&imf_status);
         if (cmd.address) {
             //printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
-            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
             OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
+            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
         }
+        OPL3_Generate4Ch(&nuked_chip, nuked_out);
         aymo_(tick)(&aymo_chip);
         ofs.write(reinterpret_cast<const char*>(&aymo_chip.og_out_a), sizeof(int16_t));
         //ofs.write(reinterpret_cast<const char*>(&chip.og_out_b), sizeof(chip.og_out_b));
@@ -320,7 +326,7 @@ void test_vhsum(void)
 {
     aymo16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, -32768);
     volatile int b = vhsum(a);
-    volatile int c = vhsum(a);
+    assert(b == -1);
 }
 
 
@@ -329,10 +335,10 @@ int main(int argc, char* argv[])
     (void)argc;
     (void)argv;
 
-    test_vhsum();
+    //test_vhsum();
 
-    imf_test_simple();
-    //imf_test_file();
+    //imf_test_simple();
+    imf_test_file();
 
     //silence_benchmark();
 

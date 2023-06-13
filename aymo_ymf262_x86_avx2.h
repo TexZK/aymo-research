@@ -85,6 +85,7 @@ Thanks:
 #define AYMO_ALIGN_V16  AYMO_ALIGN(64)
 
 typedef __m256i aymo16_t;
+typedef __m256i aymo32_t;
 
 #define vsetx       _mm256_undefined_si256
 #define vset1       _mm256_set1_epi16
@@ -662,8 +663,8 @@ struct aymo_(slot_group) {
 
     aymo16_t pg_vib;
     aymo16_t pg_mult_x2;
-    aymo16_t pg_phase_lo;
-    aymo16_t pg_phase_hi;
+    aymo32_t pg_phase_lo;
+    aymo32_t pg_phase_hi;
     aymo16_t pg_phase_out;
 
     // Updated only by writing registers
@@ -700,6 +701,7 @@ struct aymo_(chip) {
     aymo16_t eg_add;
     aymo16_t eg_incstep;
     aymo16_t pg_vib_mulhi;
+    aymo16_t pg_vib_neg;
 
     aymo16_t og_acc_a;
     aymo16_t og_acc_b;
@@ -708,6 +710,7 @@ struct aymo_(chip) {
 
     // 64-bit data
     uint64_t eg_timer;
+    uint64_t tm_timer;
 
     // 32-bit data
     uint32_t rq_delay;
@@ -726,7 +729,6 @@ struct aymo_(chip) {
     int16_t og_out_d;
     int16_t og_del_b;
     int16_t og_del_d;
-    uint16_t tm_timer;
     uint16_t rq_head;
     uint16_t rq_tail;
 

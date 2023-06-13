@@ -549,24 +549,25 @@ void aymo_(pg_update)(
 
     // Update phase
     aymo16_t fnum = cg->pg_fnum;
-    aymo16_t range = vand(vsrli(fnum, (7 - 1)), vset1(7 << 1));
-    range = vmuluhi(range, vand(sg->pg_vib, chip->pg_vib_mulhi));
+    aymo16_t range = vand(fnum, vset1(7 << 7));
+    range = vmulihi(range, vand(sg->pg_vib, chip->pg_vib_mulhi));
+    range = vsub(vxor(range, chip->pg_vib_neg), chip->pg_vib_neg);  // flip sign
     fnum = vadd(fnum, range);
 
-    aymo16_t fnum_lo = vunpacklo(fnum, vsetz());
-    aymo16_t fnum_hi = vunpackhi(fnum, vsetz());
-    aymo16_t block_sll_lo = vunpacklo(cg->pg_block, vsetz());
-    aymo16_t block_sll_hi = vunpackhi(cg->pg_block, vsetz());
-    aymo16_t basefreq_lo = vvsrli(vvsllv(fnum_lo, block_sll_lo), 1);
-    aymo16_t basefreq_hi = vvsrli(vvsllv(fnum_hi, block_sll_hi), 1);
-    aymo16_t pg_mult_x2_lo = vunpacklo(sg->pg_mult_x2, vsetz());
-    aymo16_t pg_mult_x2_hi = vunpackhi(sg->pg_mult_x2, vsetz());
-    aymo16_t deltafreq_lo = vvsrli(vvmullo(basefreq_lo, pg_mult_x2_lo), 1);
-    aymo16_t deltafreq_hi = vvsrli(vvmullo(basefreq_hi, pg_mult_x2_hi), 1);
-    aymo16_t notreset_lo = vunpacklo(sg->pg_notreset, sg->pg_notreset);
-    aymo16_t notreset_hi = vunpackhi(sg->pg_notreset, sg->pg_notreset);
-    aymo16_t pg_phase_lo = vand(notreset_lo, sg->pg_phase_lo);
-    aymo16_t pg_phase_hi = vand(notreset_hi, sg->pg_phase_hi);
+    aymo32_t fnum_lo = vunpacklo(fnum, vsetz());
+    aymo32_t fnum_hi = vunpackhi(fnum, vsetz());
+    aymo32_t block_sll_lo = vunpacklo(cg->pg_block, vsetz());
+    aymo32_t block_sll_hi = vunpackhi(cg->pg_block, vsetz());
+    aymo32_t basefreq_lo = vvsrli(vvsllv(fnum_lo, block_sll_lo), 1);
+    aymo32_t basefreq_hi = vvsrli(vvsllv(fnum_hi, block_sll_hi), 1);
+    aymo32_t pg_mult_x2_lo = vunpacklo(sg->pg_mult_x2, vsetz());
+    aymo32_t pg_mult_x2_hi = vunpackhi(sg->pg_mult_x2, vsetz());
+    aymo32_t deltafreq_lo = vvsrli(vvmullo(basefreq_lo, pg_mult_x2_lo), 1);
+    aymo32_t deltafreq_hi = vvsrli(vvmullo(basefreq_hi, pg_mult_x2_hi), 1);
+    aymo32_t notreset_lo = vunpacklo(sg->pg_notreset, sg->pg_notreset);
+    aymo32_t notreset_hi = vunpackhi(sg->pg_notreset, sg->pg_notreset);
+    aymo32_t pg_phase_lo = vand(notreset_lo, sg->pg_phase_lo);
+    aymo32_t pg_phase_hi = vand(notreset_hi, sg->pg_phase_hi);
     sg->pg_phase_lo = vvadd(pg_phase_lo, deltafreq_lo);
     sg->pg_phase_hi = vvadd(pg_phase_hi, deltafreq_hi);
 }
@@ -743,20 +744,23 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
     {
         chip->pg_vibpos = ((chip->pg_vibpos + 1) & 7);
         uint8_t vibpos = chip->pg_vibpos;
-        int16_t pg_vib_mulhi = 1;
+        int16_t pg_vib_mulhi = (0x10000 >> 7);
+        int16_t pg_vib_neg = 0;
 
         if (!(vibpos & 3)) {
             pg_vib_mulhi = 0;
         }
         else if (vibpos & 1) {
-            pg_vib_mulhi = 0x4000;  // >> 2
+            pg_vib_mulhi >>= 1;
         }
         pg_vib_mulhi >>= chip->eg_vibshift;
+        pg_vib_mulhi &= 0x7F80;
 
         if (vibpos & 4) {
-            pg_vib_mulhi *= -1;
+            pg_vib_neg = -1;
         }
         chip->pg_vib_mulhi = vset1(pg_vib_mulhi);
+        chip->pg_vib_neg = vset1(pg_vib_neg);
     }
 
     chip->tm_timer++;
@@ -1360,7 +1364,11 @@ void aymo_(write_80h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
         eg_adsr->sr = (chip->slot_regs[slot].reg_20h.egt ? 0 : reg_80h->rr);
         eg_adsr->rr = reg_80h->rr;
         sg->eg_adsr = vinsertn(sg->eg_adsr, eg_adsr_word, sgo);
-        sg->eg_sl = vinsertn(sg->eg_sl, (int16_t)reg_80h->sl, sgo);
+        int16_t eg_sl = (int16_t)reg_80h->sl;
+        if (eg_sl == 0x0F) {
+            eg_sl = 0x1F;
+        }
+        sg->eg_sl = vinsertn(sg->eg_sl, eg_sl, sgo);
     }
 }
 
