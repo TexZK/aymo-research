@@ -500,14 +500,13 @@ void aymo_(eg_update)(
     aymo16_t eg_gen = sg->eg_gen;
 
     // Move attack to decay state
-    aymo16_t eg_gen_atk_to_dec = vcmpz(vor(sg->eg_gen, sg->eg_rout));
-    aymo16_t eg_inc = vandnot(eg_gen_atk_to_dec, eg_inc_natk);
-    eg_gen = vsub(eg_gen, eg_gen_atk_to_dec);  // 0 --> 1
-
     aymo16_t eg_inc_atk_cond = vand(vand(vcmpp(sg->eg_key), vcmpp(shift)), 
                                     vand(vcmpz(sg->eg_gen), vcmpgt(vset1(15), rate_hi)));
     aymo16_t eg_inc_atk_inc = vsrlv(vnot(sg->eg_rout), vsub(vset1(4), shift));
-    eg_inc = vblendv(eg_inc, eg_inc_atk_inc, eg_inc_atk_cond);
+    aymo16_t eg_inc = vand(eg_inc_atk_cond, eg_inc_atk_inc);
+    aymo16_t eg_gen_atk_to_dec = vcmpz(vor(sg->eg_gen, sg->eg_rout));
+    eg_gen = vsub(eg_gen, eg_gen_atk_to_dec);  // 0 --> 1
+    eg_inc = vblendv(eg_inc_natk, eg_inc, vcmpz(sg->eg_gen));
     eg_inc = vandnot(eg_gen_atk_to_dec, eg_inc);
 
     // Move decay to sustain state
