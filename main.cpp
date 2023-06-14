@@ -272,8 +272,8 @@ void imf_test_simple(void)
         cmd = imf_opl_tick(&imf_status);
         if (cmd.address) {
             printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
-            OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
-            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
+            OPL3_WriteRegBuffered(&nuked_chip, cmd.address, cmd.value);
+            aymo_(enqueue_write)(&aymo_chip, cmd.address, cmd.value);
         }
         OPL3_Generate4Ch(&nuked_chip, nuked_out);
         aymo_(tick)(&aymo_chip);
@@ -288,7 +288,7 @@ void imf_test_file(void)
 {
     std::string imf_buffer;
     {
-        std::string path = "IMF\\06 - The SS Gonna Get You.wlf";
+        std::string path = "IMF\\23 - Award Ceremony.wlf";
         //std::string path = "adlib_38.imf.wlf";
         std::ifstream ifs(path, std::ios::binary);
         std::stringstream ss;
@@ -312,8 +312,8 @@ void imf_test_file(void)
         cmd = imf_opl_tick(&imf_status);
         if (cmd.address) {
             //printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
-            OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
-            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
+            OPL3_WriteRegBuffered(&nuked_chip, cmd.address, cmd.value);
+            aymo_(enqueue_write)(&aymo_chip, cmd.address, cmd.value);
         }
         OPL3_Generate4Ch(&nuked_chip, nuked_out);
         aymo_(tick)(&aymo_chip);
@@ -328,7 +328,7 @@ void file_benchmark(void)
 {
     std::string imf_buffer;
     {
-        std::string path = "IMF\\06 - The SS Gonna Get You.wlf";
+        std::string path = "IMF\\16 - Zero Hour.wlf";
         //std::string path = "adlib_38.imf.wlf";
         std::ifstream ifs(path, std::ios::binary);
         std::stringstream ss;
