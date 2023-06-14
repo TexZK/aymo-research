@@ -85,12 +85,9 @@ void imf_load(
     assert(status);
 
     status->events = NULL;
-    status->divider = 0;
     status->length = 0;
-    status->index = 0;
-    status->delay = 0;
     status->type = 0;
-    status->address_hi = 0;
+    imf_restart(status);
 
     if (type) {
         length_by_header = (ptr[0] | ((uint16_t)ptr[1] << 8));
@@ -110,6 +107,19 @@ void imf_load(
         status->length = length_by_size;
         status->events = (const struct imf_event*)(const void*)&ptr[0];
     }
+}
+
+
+void imf_restart(
+    struct imf_status* status
+)
+{
+    assert(status);
+
+    status->divider = 0;
+    status->index = 0;
+    status->delay = 0;
+    status->address_hi = 0;
 }
 
 

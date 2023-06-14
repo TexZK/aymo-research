@@ -78,6 +78,10 @@ void imf_load(
     uint8_t type
 );
 
+void imf_restart(
+    struct imf_status* status
+);
+
 const struct imf_cmd imf_opl_tick(
     struct imf_status* status
 );
