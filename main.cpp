@@ -161,8 +161,10 @@ void compare_chips(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     assert(aymo_chip->eg_tremolopos == nuked_chip->tremolopos);
     assert(aymo_chip->eg_tremoloshift == nuked_chip->tremoloshift);
     assert(aymo_chip->ng_noise == nuked_chip->noise);
-    //int16_t zeromod;
-    //int32_t mixbuff[4];
+    assert(aymo_chip->og_sum_a == nuked_chip->mixbuff[0]);
+    assert(aymo_chip->og_sum_b == nuked_chip->mixbuff[1]);
+    assert(aymo_chip->og_sum_c == nuked_chip->mixbuff[2]);
+    assert(aymo_chip->og_sum_d == nuked_chip->mixbuff[3]);
     assert(aymo_chip->rm_hh_bit2 == nuked_chip->rm_hh_bit2);
     assert(aymo_chip->rm_hh_bit3 == nuked_chip->rm_hh_bit3);
     assert(aymo_chip->rm_hh_bit7 == nuked_chip->rm_hh_bit7);
@@ -408,10 +410,10 @@ int main(int argc, char* argv[])
     //test_vhsum();
 
     //imf_test_simple();
-    //imf_test_file();
+    imf_test_file();
 
     //silence_benchmark();
-    file_benchmark();
+    //file_benchmark();
 
     return EXIT_SUCCESS;
 }

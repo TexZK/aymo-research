@@ -1119,8 +1119,8 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     int16_t accm;
     uint8_t shift = 0;
 
-    //buf4[1] = OPL3_ClipSample(chip->mixbuff[1]);
-    //buf4[3] = OPL3_ClipSample(chip->mixbuff[3]);
+    buf4[1] = OPL3_ClipSample(chip->mixbuff[1]);
+    buf4[3] = OPL3_ClipSample(chip->mixbuff[3]);
 
 #if OPL_QUIRK_CHANNELSAMPLEDELAY
     for (ii = 0; ii < 15; ii++)
@@ -1184,12 +1184,8 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     }
 #endif
 
-    {// XXX DEBUG ONLY
-        buf4[0] = OPL3_ClipSample(chip->mixbuff[0]);
-        buf4[1] = OPL3_ClipSample(chip->mixbuff[1]);
-        buf4[2] = OPL3_ClipSample(chip->mixbuff[2]);
-        buf4[3] = OPL3_ClipSample(chip->mixbuff[3]);
-    }
+    buf4[0] = OPL3_ClipSample(chip->mixbuff[0]);
+    buf4[2] = OPL3_ClipSample(chip->mixbuff[2]);
 
     if ((chip->timer & 0x3f) == 0x3f)
     {
