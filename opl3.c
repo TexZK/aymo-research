@@ -1154,10 +1154,6 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
     }
 #endif
 
-    //buf4[0] = OPL3_ClipSample(chip->mixbuff[0]);
-    //buf4[2] = OPL3_ClipSample(chip->mixbuff[2]);
-    //buf4[0] = chip->slot[0].eg_shift;//XXX DEBUG ONLY
-
 #if OPL_QUIRK_CHANNELSAMPLEDELAY
     for (ii = 18; ii < 33; ii++)
     {

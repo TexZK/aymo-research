@@ -204,11 +204,11 @@ void silence_benchmark(void)
     {
         OPL3_Reset(&nuked_chip, 49716);
 
-        int16_t outs[4];
+        int16_t nuked_out[4];
         auto time_start = std::chrono::steady_clock::now();
 
         for (uint64_t i = 0; i < 10'000'000; ++i) {
-            OPL3_Generate4Ch(&nuked_chip, outs);
+            OPL3_Generate4Ch(&nuked_chip, nuked_out);
         }
 
         auto time_end = std::chrono::steady_clock::now();
@@ -286,7 +286,7 @@ void imf_test_file(void)
 {
     std::string imf_buffer;
     {
-        std::string path = "IMF\\04 - Funkie Colonel Bill.wlf";
+        std::string path = "IMF\\06 - The SS Gonna Get You.wlf";
         //std::string path = "adlib_38.imf.wlf";
         std::ifstream ifs(path, std::ios::binary);
         std::stringstream ss;
@@ -322,6 +322,76 @@ void imf_test_file(void)
 }
 
 
+void file_benchmark(void)
+{
+    std::string imf_buffer;
+    {
+        std::string path = "IMF\\06 - The SS Gonna Get You.wlf";
+        //std::string path = "adlib_38.imf.wlf";
+        std::ifstream ifs(path, std::ios::binary);
+        std::stringstream ss;
+        ss << ifs.rdbuf();
+        imf_buffer = ss.str();
+    }
+    static struct imf_status imf_status;
+    imf_init(&imf_status, (uint32_t)imf_rate_wolfenstein_3d, (uint32_t)AYMO_(SAMPLE_RATE));
+    uint8_t imf_type = imf_guess_type(imf_buffer.c_str(), imf_buffer.size());
+    imf_load(&imf_status, imf_buffer.c_str(), imf_buffer.size(), imf_type);
+
+    int64_t time_ms_aymo = 0;
+    {
+        aymo_(init)(&aymo_chip);
+        imf_restart(&imf_status);
+
+        auto time_start = std::chrono::steady_clock::now();
+
+        struct imf_cmd cmd = { 0, 0, 1 };
+        while (cmd.delaying < 2) {
+            cmd = imf_opl_tick(&imf_status);
+            if (cmd.address) {
+                aymo_(write)(&aymo_chip, cmd.address, cmd.value);
+            }
+            aymo_(tick)(&aymo_chip);
+        }
+
+        auto time_end = std::chrono::steady_clock::now();
+        auto time_diff = (time_end - time_start);
+        auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_diff).count();
+        time_ms_aymo = time_ms;
+
+        printf_s("aymo: %lld\n", time_ms);
+    }
+
+    int64_t time_ms_nuked = 0;
+    {
+        OPL3_Reset(&nuked_chip, 49716);
+        imf_restart(&imf_status);
+
+        int16_t nuked_out[4];
+        auto time_start = std::chrono::steady_clock::now();
+
+        struct imf_cmd cmd = { 0, 0, 1 };
+        while (cmd.delaying < 2) {
+            cmd = imf_opl_tick(&imf_status);
+            if (cmd.address) {
+                OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
+            }
+            OPL3_Generate4Ch(&nuked_chip, nuked_out);
+        }
+
+        auto time_end = std::chrono::steady_clock::now();
+        auto time_diff = (time_end - time_start);
+        auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(time_diff).count();
+        time_ms_nuked = time_ms;
+
+        printf_s("nuked: %lld\n", time_ms);
+    }
+
+    double time_ratio = ((double)time_ms_aymo / (double)time_ms_nuked);
+    printf_s("nuked/aymo: %5.3f\n", 1 / time_ratio);
+}
+
+
 void test_vhsum(void)
 {
     aymo16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, -32768);
@@ -338,9 +408,10 @@ int main(int argc, char* argv[])
     //test_vhsum();
 
     //imf_test_simple();
-    imf_test_file();
+    //imf_test_file();
 
     //silence_benchmark();
+    file_benchmark();
 
     return EXIT_SUCCESS;
 }
