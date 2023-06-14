@@ -403,7 +403,7 @@ void aymo_(wg_update)(
     // Compute operator phase input
     aymo16_t modsum = vadd(fbmod, prmod);
     aymo16_t phase = vadd(sg->pg_phase_out, modsum);
-    phase = vand(phase, vset1(0x3FF));  // TBV: needed?
+    phase = vand(phase, vset1(0x03FF));  // TBV: needed?
 
     // Process phase
     aymo16_t phase_sped = vmululo(phase, sg->wg_phase_mullo);
@@ -415,8 +415,9 @@ void aymo_(wg_update)(
     aymo16_t phase_out = vand(vand(phase_gate, phase_mask), phase_idx);
 
     // Compute logsin variant
-    aymo16_t phase_lo = vand(phase_out, vset1(0xFF));
+    aymo16_t phase_lo = vand(phase_out, vset1(0x00FF));
     aymo16_t logsin_val = vgather(aymo_(logsin_table), phase_lo);
+    logsin_val = vblendv(vset1(0x1000), logsin_val, phase_gate);  // TBV
 
     // Compute exponential output
     aymo16_t exp_in = vblendv(phase_out, logsin_val, sg->wg_sine_gate);
@@ -481,7 +482,7 @@ void aymo_(eg_update)(
     aymo16_t shift_ge12 = vadd(vand(rate_hi, vset1(3)), incstep_ge12);
     shift_ge12 = vminu(shift_ge12, vset1(3));
     shift_ge12 = vblendv(shift_ge12, chip->eg_statev, vcmpz(shift_ge12));
-    
+
     aymo16_t shift = vblendv(shift_lt12, shift_ge12, vcmpgt(rate_hi, vset1(11)));
     shift = vandnot(vcmpz(rate_temp), shift);
 
@@ -490,9 +491,9 @@ void aymo_(eg_update)(
     eg_rout = vandnot(vandnot(notreset, vcmpeq(rate_hi, vset1(15))), eg_rout);
 
     // Envelope off
-    aymo16_t eg_off = vcmpgt(sg->eg_rout, vset1(0x1F7));
+    aymo16_t eg_off = vcmpgt(sg->eg_rout, vset1(0x01F7));
     aymo16_t eg_gen_natk_and_nrst = vand(vcmpp(sg->eg_gen), notreset);
-    eg_rout = vblendv(eg_rout, vset1(0x1FF), vand(eg_gen_natk_and_nrst, eg_off));
+    eg_rout = vblendv(eg_rout, vset1(0x01FF), vand(eg_gen_natk_and_nrst, eg_off));
 
     // Compute common increment not in attack state
     aymo16_t eg_inc_natk_cond = vand(vand(notreset, vcmpz(eg_off)), vcmpp(shift));
@@ -500,7 +501,7 @@ void aymo_(eg_update)(
     aymo16_t eg_gen = sg->eg_gen;
 
     // Move attack to decay state
-    aymo16_t eg_inc_atk_cond = vand(vand(vcmpp(sg->eg_key), vcmpp(shift)), 
+    aymo16_t eg_inc_atk_cond = vand(vand(vcmpp(sg->eg_key), vcmpp(shift)),
                                     vand(vcmpz(sg->eg_gen), vcmpgt(vset1(15), rate_hi)));
     aymo16_t eg_inc_atk_inc = vsrlv(vnot(sg->eg_rout), vsub(vset1(4), shift));
     aymo16_t eg_inc = vand(eg_inc_atk_cond, eg_inc_atk_inc);
@@ -524,7 +525,7 @@ void aymo_(eg_update)(
 
     // Update envelope generator
     eg_rout = vadd(eg_rout, eg_inc);
-    eg_rout = vand(eg_rout, vset1(0x1FF));  // TBV: needed?
+    eg_rout = vand(eg_rout, vset1(0x01FF));  // TBV: needed?
     sg->eg_rout = eg_rout;
     sg->eg_gen = eg_gen;
     sg->eg_gen_mullo = vsllv(vset1(1), vslli(eg_gen, 2));
@@ -717,9 +718,6 @@ void aymo_(og_update)(struct aymo_(chip)* chip)
     chip->og_out_c = clamp16(chip->og_sum_c);
     chip->og_out_d = chip->og_del_d;
     chip->og_del_d = clamp16(chip->og_sum_d);
-
-    // XXX DEBUG ONLY
-    //chip->og_out_a = chip->sg[0].eg_shift.m256i_u16[0];
 }
 
 
@@ -785,8 +783,9 @@ AYMO_INLINE
 void aymo_(rq_update)(struct aymo_(chip)* chip)
 {
     if (chip->rq_delay) {
-        chip->rq_delay--;
-        return;
+        if (--chip->rq_delay) {
+            return;
+        }
     }
     if (chip->rq_head != chip->rq_tail) {
         struct aymo_(reg_queue_item)* item = &chip->rq_buffer[chip->rq_head];
