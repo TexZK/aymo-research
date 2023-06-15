@@ -384,6 +384,28 @@ const struct aymo_(conn) aymo_(conn_ryt_table)[4][2/* slot */] =
 };
 
 
+// Slot mask output delay for outputs A and C
+AYMO_STATIC
+const uint16_t aymo_(og_prout_ac)[4/* slot groups */] =
+{
+    0xF8F8,
+    0xFFF8,
+    0xFFF8,
+    0xFFF8
+};
+
+
+// Slot mask output delay for outputs A and C
+AYMO_STATIC
+const uint16_t aymo_(og_prout_bd)[4/* slot groups */] =
+{
+    0xF888,
+    0xF888,
+    0xFF88,
+    0xFF88
+};
+
+
 // Updates wave generators
 AYMO_INLINE
 void aymo_(wg_update)(
@@ -435,11 +457,14 @@ void aymo_(wg_update)(
     sg->wg_out = wave_out;
     chip->wg_mod = wave_out;
 
-    // Update chip output accumulators
-    chip->og_acc_a = vadd(chip->og_acc_a, vand(wave_out, sg->og_out_ch_gate_a));
-    chip->og_acc_b = vadd(chip->og_acc_b, vand(wave_out, sg->og_out_ch_gate_b));
-    chip->og_acc_c = vadd(chip->og_acc_c, vand(wave_out, sg->og_out_ch_gate_c));
-    chip->og_acc_d = vadd(chip->og_acc_d, vand(wave_out, sg->og_out_ch_gate_d));
+    // Update chip output accumulators, with quirky slot output delay
+    aymo16_t og_out_ac = vblendv(wave_out, sg->og_prout, sg->og_prout_ac);
+    aymo16_t og_out_bd = vblendv(wave_out, sg->og_prout, sg->og_prout_bd);
+    sg->og_prout = wave_out;
+    chip->og_acc_a = vadd(chip->og_acc_a, vand(og_out_ac, sg->og_out_ch_gate_a));
+    chip->og_acc_c = vadd(chip->og_acc_c, vand(og_out_ac, sg->og_out_ch_gate_c));
+    chip->og_acc_b = vadd(chip->og_acc_b, vand(og_out_bd, sg->og_out_ch_gate_b));
+    chip->og_acc_d = vadd(chip->og_acc_d, vand(og_out_bd, sg->og_out_ch_gate_d));
 }
 
 
@@ -1666,6 +1691,8 @@ void aymo_(init)(struct aymo_(chip)* chip)
         sg->eg_gen_mullo = vset1(AYMO_(EG_GEN_MULLO_RELEASE));
         sg->pg_notreset = vset1(-1);
         sg->pg_mult_x2 = vset1(aymo_(pg_mult_x2_table)[0]);
+        sg->og_prout_ac = vsetm(aymo_(og_prout_ac)[sgi]);
+        sg->og_prout_bd = vsetm(aymo_(og_prout_bd)[sgi]);
     }
 
     // Initialize channels

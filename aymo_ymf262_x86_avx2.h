@@ -93,6 +93,7 @@ typedef __m256i aymo32_t;
 #define vsetr       _mm256_setr_epi16
 #define vsetz       _mm256_setzero_si256
 #define vsetf()     (vset1(-1))
+#define vsetm        mm256_setm_epi16
 
 #define vnot(x)     (vxor((x), vsetf()))
 #define vand        _mm256_and_si256
@@ -153,6 +154,7 @@ typedef __m256i aymo32_t;
 
 #define vpackus     _mm256_packus_epi32
 
+
 #define vvsetx      _mm256_undefined_si256
 #define vvset1      _mm256_set1_epi32
 #define vvseta      _mm256_set_epi32
@@ -167,6 +169,31 @@ typedef __m256i aymo32_t;
 #define vvsllv      _mm256_sllv_epi32
 
 #define vvmullo     _mm256_mullo_epi32
+
+
+AYMO_INLINE
+__m256i mm256_setm_epi16(uint16_t m)
+{
+    __m256i x = vsetr(
+        (((m >>  0) & 1) ? -1 : 0),
+        (((m >>  1) & 1) ? -1 : 0),
+        (((m >>  2) & 1) ? -1 : 0),
+        (((m >>  3) & 1) ? -1 : 0),
+        (((m >>  4) & 1) ? -1 : 0),
+        (((m >>  5) & 1) ? -1 : 0),
+        (((m >>  6) & 1) ? -1 : 0),
+        (((m >>  7) & 1) ? -1 : 0),
+        (((m >>  8) & 1) ? -1 : 0),
+        (((m >>  9) & 1) ? -1 : 0),
+        (((m >> 10) & 1) ? -1 : 0),
+        (((m >> 11) & 1) ? -1 : 0),
+        (((m >> 12) & 1) ? -1 : 0),
+        (((m >> 13) & 1) ? -1 : 0),
+        (((m >> 14) & 1) ? -1 : 0),
+        (((m >> 15) & 1) ? -1 : 0)
+    );
+    return x;
+}
 
 
 // see: https://stackoverflow.com/questions/51789685/reproduce-mm256-sllv-epi16-and-mm256-sllv-epi8-in-avx2/51805592#51805592
@@ -643,9 +670,13 @@ struct aymo_(slot_group) {
     aymo16_t wg_phase_flip;
     aymo16_t wg_phase_mask;
     aymo16_t wg_sine_gate;
+
+    aymo16_t og_prout;
+    aymo16_t og_prout_ac;
+    aymo16_t og_prout_bd;
     aymo16_t og_out_ch_gate_a;
-    aymo16_t og_out_ch_gate_b;
     aymo16_t og_out_ch_gate_c;
+    aymo16_t og_out_ch_gate_b;
     aymo16_t og_out_ch_gate_d;
 
     aymo16_t eg_rout;
@@ -704,8 +735,8 @@ struct aymo_(chip) {
     aymo16_t pg_vib_neg;
 
     aymo16_t og_acc_a;
-    aymo16_t og_acc_b;
     aymo16_t og_acc_c;
+    aymo16_t og_acc_b;
     aymo16_t og_acc_d;
 
     // 64-bit data
@@ -715,8 +746,8 @@ struct aymo_(chip) {
     // 32-bit data
     uint32_t rq_delay;
     int32_t og_sum_a;
-    int32_t og_sum_b;
     int32_t og_sum_c;
+    int32_t og_sum_b;
     int32_t og_sum_d;
     uint32_t og_ch2x_pairing;
     uint32_t og_ch2x_drum;

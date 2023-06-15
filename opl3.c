@@ -45,7 +45,6 @@
 #endif
 
 /* Quirk: Some FM channels are output one sample later on the left side than the right. */
-#define OPL_QUIRK_CHANNELSAMPLEDELAY 0  // XXX DEBUG
 #ifndef OPL_QUIRK_CHANNELSAMPLEDELAY
 #define OPL_QUIRK_CHANNELSAMPLEDELAY (!OPL_ENABLE_STEREOEXT)
 #endif
