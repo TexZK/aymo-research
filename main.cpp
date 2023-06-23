@@ -25,6 +25,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 
 #include "imf.h"
 #include "opl3.h"
+#include "regdump.h"
 
 //#include <cassert>//XXX
 #define assert(c) {if(!(c))__debugbreak();}//XXX
@@ -259,7 +260,7 @@ void imf_test_simple(void)
     imf_init(&imf_status, (uint32_t)imf_rate_wolfenstein_3d, (uint32_t)AYMO_(SAMPLE_RATE));
     uint8_t imf_type = imf_guess_type(imf_buffer, sizeof(imf_buffer));
     imf_load(&imf_status, imf_buffer, sizeof(imf_buffer), imf_type);
-    std::ofstream ofs("simple.raw", std::ios::out | std::ios::binary | std::ios::trunc);
+    std::ofstream ofs("simple.raw", std::ios::binary);
 
     aymo_(init)(&aymo_chip);
 
@@ -299,7 +300,7 @@ void imf_test_file(void)
     imf_init(&imf_status, (uint32_t)imf_rate_wolfenstein_3d, (uint32_t)AYMO_(SAMPLE_RATE));
     uint8_t imf_type = imf_guess_type(imf_buffer.c_str(), imf_buffer.size());
     imf_load(&imf_status, imf_buffer.c_str(), imf_buffer.size(), imf_type);
-    std::ofstream ofs("file.raw", std::ios::out | std::ios::binary | std::ios::trunc);
+    std::ofstream ofs("file.raw", std::ios::binary);
 
     aymo_(init)(&aymo_chip);
 
@@ -319,6 +320,47 @@ void imf_test_file(void)
         aymo_(tick)(&aymo_chip);
         ofs.write(reinterpret_cast<const char*>(&aymo_chip.og_out_a), sizeof(int16_t));
         //ofs.write(reinterpret_cast<const char*>(&chip.og_out_b), sizeof(chip.og_out_b));
+        ofs.write(reinterpret_cast<const char*>(&nuked_out[0]), sizeof(int16_t));
+    }
+}
+
+
+void regdump_test_file(void)
+{
+    std::string regdump_buffer;
+    {
+        std::string path = "regdumpopl.bin";
+        std::ifstream ifs(path, std::ios::binary);
+        std::stringstream ss;
+        ss << ifs.rdbuf();
+        regdump_buffer = ss.str();
+    }
+    static struct regdump_status regdump_status;
+    regdump_init(&regdump_status);
+    uint8_t imf_type = imf_guess_type(regdump_buffer.c_str(), regdump_buffer.size());
+    regdump_load(&regdump_status, regdump_buffer.c_str(), regdump_buffer.size());
+    std::ofstream ofs("file.raw", std::ios::binary);
+
+    aymo_(init)(&aymo_chip);
+
+    OPL3_Reset(&nuked_chip, 49716);
+    static int16_t nuked_out[4] = { 0, 0, 0, 0 };
+
+    struct regdump_cmd cmd = { 0, 0, 1 };
+    while (cmd.delaying < 2) {
+        //compare_chips(&aymo_chip, &nuked_chip);
+        cmd = regdump_opl_tick(&regdump_status);
+        if (cmd.address) {
+            //printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
+            //OPL3_WriteRegBuffered(&nuked_chip, cmd.address, cmd.value);  // FIXME: different queue delays
+            //aymo_(enqueue_write)(&aymo_chip, cmd.address, cmd.value);
+            OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
+            aymo_(write)(&aymo_chip, cmd.address, cmd.value);
+        }
+        OPL3_Generate4Ch(&nuked_chip, nuked_out);
+        aymo_(tick)(&aymo_chip);
+        ofs.write(reinterpret_cast<const char*>(&aymo_chip.og_out_a), sizeof(int16_t));
+        //ofs.write(reinterpret_cast<const char*>(&aymo_chip.og_out_b), sizeof(int16_t));
         ofs.write(reinterpret_cast<const char*>(&nuked_out[0]), sizeof(int16_t));
     }
 }
@@ -410,7 +452,8 @@ int main(int argc, char* argv[])
     //test_vhsum();
 
     //imf_test_simple();
-    imf_test_file();
+    //imf_test_file();
+    regdump_test_file();
 
     //silence_benchmark();
     //file_benchmark();

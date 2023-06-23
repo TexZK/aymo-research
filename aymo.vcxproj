@@ -147,12 +147,14 @@
     <ClInclude Include="aymo_ymf262_x86_avx2.h" />
     <ClInclude Include="imf.h" />
     <ClInclude Include="opl3.h" />
+    <ClInclude Include="regdump.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aymo_ymf262_x86_avx2.c" />
     <ClCompile Include="imf.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="opl3.c" />
+    <ClCompile Include="regdump.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

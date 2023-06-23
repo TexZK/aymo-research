@@ -24,6 +24,9 @@
     <ClInclude Include="imf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="regdump.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aymo_ymf262_x86_avx2.c">
@@ -36,6 +39,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="imf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="regdump.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
