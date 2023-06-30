@@ -751,8 +751,7 @@ AYMO_INLINE
 void aymo_(tm_update)(struct aymo_(chip)* chip)
 {
     // Update timed effects timer (tremolo and vibrato)
-    if ((chip->tm_timer & 0x3F) == 0x3F)
-    {
+    if ((chip->tm_timer & 0x3F) == 0x3F) {
         chip->eg_tremolopos = ((chip->eg_tremolopos + 1) % 210);
     }
     uint16_t eg_tremolopos = chip->eg_tremolopos;
@@ -762,8 +761,7 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
     uint16_t eg_tremolo = (eg_tremolopos >> chip->eg_tremoloshift);
     chip->eg_tremolo = vset1((short)eg_tremolo);
 
-    if ((chip->tm_timer & 0x3FF) == 0x3FF)
-    {
+    if ((chip->tm_timer & 0x3FF) == 0x3FF) {
         chip->pg_vibpos = ((chip->pg_vibpos + 1) & 7);
         uint8_t vibpos = chip->pg_vibpos;
         int16_t pg_vib_mulhi = (0x10000 >> 7);
@@ -1155,6 +1153,7 @@ void aymo_(cm_rewire_rhythm)(struct aymo_(chip)* chip, const struct aymo_(reg_BD
 {
     const struct aymo_(reg_BDh) reg_BDh_zero = { 0, 0, 0, 0, 0, 0, 0, 0 };
     const struct aymo_(reg_BDh)* reg_BDh = &chip->chip_regs.reg_BDh;
+    int force_update = 0;
 
     if (reg_BDh->ryt) {
         if (!reg_BDh_prev->ryt) {
@@ -1171,6 +1170,8 @@ void aymo_(cm_rewire_rhythm)(struct aymo_(chip)* chip, const struct aymo_(reg_BD
             const struct aymo_(conn)* ch8_conn = aymo_(conn_ryt_table)[3];
             aymo_(cm_rewire_slot)(chip, aymo_(ch2x_to_word)[8][0], &ch8_conn[0]);
             aymo_(cm_rewire_slot)(chip, aymo_(ch2x_to_word)[8][1], &ch8_conn[1]);
+
+            force_update = 1;
         }
     }
     else {
@@ -1192,45 +1193,56 @@ void aymo_(cm_rewire_rhythm)(struct aymo_(chip)* chip, const struct aymo_(reg_BD
             aymo_(cm_rewire_slot)(chip, aymo_(ch2x_to_word)[8][1], &ch8_conn[1]);
 
             reg_BDh = &reg_BDh_zero;  // force all keys off
+            force_update = 1;
         }
     }
 
-    int8_t word_hh = aymo_(ch2x_to_word)[7][0];
-    if (reg_BDh->hh) {
-        aymo_(eg_key_on)(chip, word_hh, AYMO_(EG_KEY_DRUM));
-    } else {
-        aymo_(eg_key_off)(chip, word_hh, AYMO_(EG_KEY_DRUM));
+    if ((reg_BDh->hh != reg_BDh_prev->hh) || force_update) {
+        int8_t word_hh = aymo_(ch2x_to_word)[7][0];
+        if (reg_BDh->hh) {
+            aymo_(eg_key_on)(chip, word_hh, AYMO_(EG_KEY_DRUM));
+        } else {
+            aymo_(eg_key_off)(chip, word_hh, AYMO_(EG_KEY_DRUM));
+        }
     }
 
-    int8_t word_tc = aymo_(ch2x_to_word)[8][1];
-    if (reg_BDh->tc) {
-        aymo_(eg_key_on)(chip, word_tc, AYMO_(EG_KEY_DRUM));
-    } else {
-        aymo_(eg_key_off)(chip, word_tc, AYMO_(EG_KEY_DRUM));
+    if ((reg_BDh->tc != reg_BDh_prev->tc) || force_update) {
+        int8_t word_tc = aymo_(ch2x_to_word)[8][1];
+        if (reg_BDh->tc) {
+            aymo_(eg_key_on)(chip, word_tc, AYMO_(EG_KEY_DRUM));
+        } else {
+            aymo_(eg_key_off)(chip, word_tc, AYMO_(EG_KEY_DRUM));
+        }
     }
 
-    int8_t word_tom = aymo_(ch2x_to_word)[8][0];
-    if (reg_BDh->tom) {
-        aymo_(eg_key_on)(chip, word_tom, AYMO_(EG_KEY_DRUM));
-    } else {
-        aymo_(eg_key_off)(chip, word_tom, AYMO_(EG_KEY_DRUM));
+    if ((reg_BDh->tom != reg_BDh_prev->tom) || force_update) {
+        int8_t word_tom = aymo_(ch2x_to_word)[8][0];
+        if (reg_BDh->tom) {
+            aymo_(eg_key_on)(chip, word_tom, AYMO_(EG_KEY_DRUM));
+        } else {
+            aymo_(eg_key_off)(chip, word_tom, AYMO_(EG_KEY_DRUM));
+        }
     }
 
-    int8_t word_sd = aymo_(ch2x_to_word)[7][1];
-    if (reg_BDh->sd) {
-        aymo_(eg_key_on)(chip, word_sd, AYMO_(EG_KEY_DRUM));
-    } else {
-        aymo_(eg_key_off)(chip, word_sd, AYMO_(EG_KEY_DRUM));
+    if ((reg_BDh->sd != reg_BDh_prev->sd) || force_update) {
+        int8_t word_sd = aymo_(ch2x_to_word)[7][1];
+        if (reg_BDh->sd) {
+            aymo_(eg_key_on)(chip, word_sd, AYMO_(EG_KEY_DRUM));
+        } else {
+            aymo_(eg_key_off)(chip, word_sd, AYMO_(EG_KEY_DRUM));
+        }
     }
 
-    int8_t word_bd0 = aymo_(ch2x_to_word)[6][0];
-    int8_t word_bd1 = aymo_(ch2x_to_word)[6][1];
-    if (reg_BDh->bd) {
-        aymo_(eg_key_on)(chip, word_bd0, AYMO_(EG_KEY_DRUM));
-        aymo_(eg_key_on)(chip, word_bd1, AYMO_(EG_KEY_DRUM));
-    } else {
-        aymo_(eg_key_off)(chip, word_bd0, AYMO_(EG_KEY_DRUM));
-        aymo_(eg_key_off)(chip, word_bd1, AYMO_(EG_KEY_DRUM));
+    if ((reg_BDh->bd != reg_BDh_prev->bd) || force_update) {
+        int8_t word_bd0 = aymo_(ch2x_to_word)[6][0];
+        int8_t word_bd1 = aymo_(ch2x_to_word)[6][1];
+        if (reg_BDh->bd) {
+            aymo_(eg_key_on)(chip, word_bd0, AYMO_(EG_KEY_DRUM));
+            aymo_(eg_key_on)(chip, word_bd1, AYMO_(EG_KEY_DRUM));
+        } else {
+            aymo_(eg_key_off)(chip, word_bd0, AYMO_(EG_KEY_DRUM));
+            aymo_(eg_key_off)(chip, word_bd1, AYMO_(EG_KEY_DRUM));
+        }
     }
 }
 
@@ -1483,8 +1495,7 @@ void aymo_(write_B0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
         if (reg_B0h->kon != reg_B0h_prev.kon) {
             if (reg_B0h->kon) {
                 aymo_(ch2x_key_on)(chip, ch2x);
-            }
-            else {
+            } else {
                 aymo_(ch2x_key_off)(chip, ch2x);
             }
         }
