@@ -162,6 +162,11 @@ typedef __m256i aymo32_t;
 #define vvsetz      _mm256_setzero_si256
 #define vvsetf()    (vvset1(-1))
 
+#define vvand       vand
+#define vvor        vor
+#define vvxor       vxor
+#define vvandnot    vandnot
+
 #define vvadd       _mm256_add_epi32
 
 #define vvsrli      _mm256_srli_epi32
@@ -314,13 +319,12 @@ __m256i mm256_i16gather_epi16lo(int16_t const* v, __m256i i)
         -1, -1, -1, 14, -1, -1, -1, 10, -1, -1, -1, 6, -1, -1, -1, 2,
         -1, -1, -1, 14, -1, -1, -1, 10, -1, -1, -1, 6, -1, -1, -1, 2
     );
-    __m256i jl = _mm256_shuffle_epi8(i, sl);
-    __m256i rl = _mm256_i32gather_epi32((const int*)v, jl, 2);
-    rl = _mm256_and_epi32(rl, _mm256_set1_epi32(0x0000FFFF));
     __m256i jh = _mm256_shuffle_epi8(i, sh);
-    __m256i rh = _mm256_i32gather_epi32((const int*)v, jh, 2);
+    __m256i rh = _mm256_i32gather_epi32((const int32_t*)v, jh, 2);
     rh = _mm256_slli_epi32(rh, 16);
-    __m256i r = _mm256_or_si256(rl, rh);
+    __m256i jl = _mm256_shuffle_epi8(i, sl);
+    __m256i rl = _mm256_i32gather_epi32((const int32_t*)v, jl, 2);
+    __m256i r = _mm256_blend_epi16(rl, rh, 0xAA);
     return r;
 
 #elif (CONFIG_AYMO_X86_AVX2_GATHER16_STRATEGY == 1)
@@ -682,7 +686,7 @@ struct aymo_(slot_group) {
     aymo16_t eg_rout;
     aymo16_t eg_tl_x4;
     aymo16_t eg_ksl_sh;
-    aymo16_t eg_am;
+    aymo16_t eg_tremolo_am;
     aymo16_t eg_out;
     aymo16_t eg_gen;
     aymo16_t eg_sl;
@@ -694,11 +698,14 @@ struct aymo_(slot_group) {
 
     aymo16_t pg_vib;
     aymo16_t pg_mult_x2;
+    aymo32_t pg_deltafreq_lo;
+    aymo32_t pg_deltafreq_hi;
     aymo32_t pg_phase_lo;
     aymo32_t pg_phase_hi;
     aymo16_t pg_phase_out;
 
     // Updated only by writing registers
+    aymo16_t eg_am;
     aymo16_t og_out_gate;
 };
 
@@ -727,7 +734,6 @@ struct aymo_(chip) {
     struct aymo_(ch2x_group) cg[AYMO_(SLOT_GROUP_NUM) / 2];
 
     aymo16_t wg_mod;
-    aymo16_t eg_tremolo;
     aymo16_t eg_statev;
     aymo16_t eg_add;
     aymo16_t eg_incstep;

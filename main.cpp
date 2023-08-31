@@ -158,7 +158,7 @@ void compare_chips(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     //uint8_t rhy;
     assert(aymo_chip->pg_vibpos == nuked_chip->vibpos);
     assert(aymo_chip->eg_vibshift == nuked_chip->vibshift);
-    assert((uint16_t)vextractn(aymo_chip->eg_tremolo, 0) == nuked_chip->tremolo);
+    //assert((uint16_t)vextractn(aymo_chip->eg_tremolo, 0) == nuked_chip->tremolo);
     assert(aymo_chip->eg_tremolopos == nuked_chip->tremolopos);
     assert(aymo_chip->eg_tremoloshift == nuked_chip->tremoloshift);
     assert(aymo_chip->ng_noise == nuked_chip->noise);
@@ -368,30 +368,32 @@ void regdump_test_file(void)
 
 void file_benchmark(void)
 {
-    std::string imf_buffer;
+    std::string regdump_buffer;
     {
-        std::string path = "IMF\\16 - Zero Hour.wlf";
+        std::string path = "regdumpopl.bin";
+        //std::string path = "IMF\\16 - Zero Hour.wlf";
         //std::string path = "adlib_38.imf.wlf";
         std::ifstream ifs(path, std::ios::binary);
         std::stringstream ss;
         ss << ifs.rdbuf();
-        imf_buffer = ss.str();
+        regdump_buffer = ss.str();
     }
-    static struct imf_status imf_status;
-    imf_init(&imf_status, (uint32_t)imf_rate_wolfenstein_3d, (uint32_t)AYMO_(SAMPLE_RATE));
-    uint8_t imf_type = imf_guess_type(imf_buffer.c_str(), imf_buffer.size());
-    imf_load(&imf_status, imf_buffer.c_str(), imf_buffer.size(), imf_type);
+    static struct regdump_status regdump_status;
+    regdump_init(&regdump_status);
+    uint8_t imf_type = imf_guess_type(regdump_buffer.c_str(), regdump_buffer.size());
+    regdump_load(&regdump_status, regdump_buffer.c_str(), regdump_buffer.size());
+    std::ofstream ofs("file.raw", std::ios::binary);
 
     int64_t time_ms_aymo = 0;
     {
         aymo_(init)(&aymo_chip);
-        imf_restart(&imf_status);
+        regdump_restart(&regdump_status);
 
         auto time_start = std::chrono::steady_clock::now();
 
-        struct imf_cmd cmd = { 0, 0, 1 };
+        struct regdump_cmd cmd = { 0, 0, 1 };
         while (cmd.delaying < 2) {
-            cmd = imf_opl_tick(&imf_status);
+            cmd = regdump_opl_tick(&regdump_status);
             if (cmd.address) {
                 aymo_(write)(&aymo_chip, cmd.address, cmd.value);
             }
@@ -409,14 +411,14 @@ void file_benchmark(void)
     int64_t time_ms_nuked = 0;
     {
         OPL3_Reset(&nuked_chip, 49716);
-        imf_restart(&imf_status);
+        regdump_restart(&regdump_status);
 
         int16_t nuked_out[4];
         auto time_start = std::chrono::steady_clock::now();
 
-        struct imf_cmd cmd = { 0, 0, 1 };
+        struct regdump_cmd cmd = { 0, 0, 1 };
         while (cmd.delaying < 2) {
-            cmd = imf_opl_tick(&imf_status);
+            cmd = regdump_opl_tick(&regdump_status);
             if (cmd.address) {
                 OPL3_WriteReg(&nuked_chip, cmd.address, cmd.value);
             }
@@ -453,10 +455,10 @@ int main(int argc, char* argv[])
 
     //imf_test_simple();
     //imf_test_file();
-    regdump_test_file();
+    //regdump_test_file();
 
     //silence_benchmark();
-    //file_benchmark();
+    file_benchmark();
 
     return EXIT_SUCCESS;
 }

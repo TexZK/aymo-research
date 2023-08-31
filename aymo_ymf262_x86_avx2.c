@@ -289,12 +289,12 @@ const int8_t aymo_(eg_kslsh_table)[4] =
 };
 
 AYMO_STATIC
-const int8_t aymo_(eg_incstep_table)[4] =
+const uint16_t aymo_(eg_incstep_table)[4] =
 {
-    ((1 << 3) | (1 << 2) | (1 << 1) | (0 << 0)),
-    ((1 << 3) | (0 << 2) | (0 << 1) | (0 << 0)),
-    ((1 << 3) | (1 << 2) | (0 << 1) | (0 << 0)),
-    ((0 << 3) | (0 << 2) | (0 << 1) | (0 << 0))
+    ((1 << 15) | (1 << 14) | (1 << 13)),
+    ((0 << 15) | (0 << 14) | (1 << 13)),
+    ((0 << 15) | (1 << 14) | (1 << 13)),
+    ((0 << 15) | (0 << 14) | (0 << 13))
 };
 
 
@@ -308,8 +308,8 @@ const struct aymo_(wave) aymo_(wave_table)[8] =
     { 1,  0x0100,  0x0000,  0x0100,  0x00FF,  -1 },
     { 2,  0x0400,  0x0200,  0x0100,  0x00FF,  -1 },
     { 2,  0x0400,  0x0000,  0x0100,  0x00FF,  -1 },
-    { 1,  0x0000,  0x0200,  0x0200,  0x0001,  00 },
-    { 8,  0x0000,  0x1000,  0x1000,  0x1FFF,  00 }
+    { 1,  0x0000,  0x0200,  0x0200,  0x0001,   0 },
+    { 8,  0x0000,  0x1000,  0x1000,  0x1FFF,   0 }
 };
 
 
@@ -318,12 +318,12 @@ AYMO_STATIC AYMO_ALIGN_V16
 const struct aymo_(conn) aymo_(conn_ch2x_table)[2/* cnt */][2/* slot */] =
 {
     {
-        { -1,  00,  00 },
-        { 00,  -1,  -1 }
+        { -1,   0,   0 },
+        {  0,  -1,  -1 }
     },
     {
-        { -1,  00,  -1 },
-        { 00,  00,  -1 }
+        { -1,   0,  -1 },
+        {  0,   0,  -1 }
     },
 };
 
@@ -332,28 +332,28 @@ AYMO_STATIC AYMO_ALIGN_V16
 const struct aymo_(conn) aymo_(conn_ch4x_table)[4/* cnt */][4/* slot */] =
 {
     {
-        { -1,  00,  00 },
-        { 00,  -1,  -0 },
-        { 00,  -1,  00 },
-        { 00,  -1,  -1 }
+        { -1,   0,   0 },
+        {  0,  -1,  -0 },
+        {  0,  -1,   0 },
+        {  0,  -1,  -1 }
     },
     {
-        { -1,  00,  00 },
-        { 00,  -1,  -1 },
-        { 00,  00,  00 },
-        { 00,  -1,  -1 }
+        { -1,   0,   0 },
+        {  0,  -1,  -1 },
+        {  0,   0,   0 },
+        {  0,  -1,  -1 }
     },
     {
-        { -1,  00,  -1 },
-        { 00,  00,  00 },
-        { 00,  -1,  00 },
-        { 00,  -1,  -1 }
+        { -1,   0,  -1 },
+        {  0,   0,   0 },
+        {  0,  -1,   0 },
+        {  0,  -1,  -1 }
     },
     {
-        { -1,  00,  -1 },
-        { 00,  00,  00 },
-        { 00,  -1,  -1 },
-        { 00,  00,  -1 }
+        { -1,   0,  -1 },
+        {  0,   0,   0 },
+        {  0,  -1,  -1 },
+        {  0,   0,  -1 }
     },
 };
 
@@ -363,23 +363,23 @@ const struct aymo_(conn) aymo_(conn_ryt_table)[4][2/* slot */] =
 {
     // Channel 6: BD, FM
     {
-        { -1,  00,  00 },
-        { 00,  -1,  -1 }
+        { -1,   0,   0 },
+        {  0,  -1,  -1 }
     },
     // Channel 6: BD, AM
     {
-        { -1,  00,  00 },
-        { 00,  00,  -1 }
+        { -1,   0,   0 },
+        {  0,   0,  -1 }
     },
     // Channel 7: HH + SD
     {
-        { 00,  00,  -1 },
-        { 00,  00,  -1 }
+        {  0,   0,  -1 },
+        {  0,   0,  -1 }
     },
     // Channel 8: TT + TC
     {
-        { 00,  00,  -1 },
-        { 00,  00,  -1 }
+        {  0,   0,  -1 },
+        {  0,   0,  -1 }
     }
 };
 
@@ -414,18 +414,15 @@ void aymo_(wg_update)(
     struct aymo_(slot_group)* sg
 )
 {
-    // Compute feedback input
+    // Compute feedback and modulation inputs
     aymo16_t fbsum = vslli(vadd(sg->wg_out, sg->wg_prout), 1);
+    aymo16_t prmod = vand(chip->wg_mod, sg->wg_prmod_gate);
     aymo16_t fbmod = vand(vmulihi(fbsum, sg->wg_fb_mulhi), sg->wg_fbmod_gate);
     sg->wg_prout = sg->wg_out;
-
-    // Compute modulation input
-    aymo16_t prmod = vand(chip->wg_mod, sg->wg_prmod_gate);
 
     // Compute operator phase input
     aymo16_t modsum = vadd(fbmod, prmod);
     aymo16_t phase = vadd(sg->pg_phase_out, modsum);
-    phase = vand(phase, vset1(0x03FF));  // TBV: needed?
 
     // Process phase
     aymo16_t phase_sped = vmululo(phase, sg->wg_phase_mullo);
@@ -437,15 +434,15 @@ void aymo_(wg_update)(
     aymo16_t phase_out = vand(vand(phase_gate, phase_mask), phase_idx);
 
     // Compute logsin variant
-    aymo16_t phase_lo = vand(phase_out, vset1(0x00FF));
+    aymo16_t phase_lo = phase_out;  // vgather() masks to low byte
     aymo16_t logsin_val = vgather(aymo_(logsin_table), phase_lo);
-    logsin_val = vblendv(vset1(0x1000), logsin_val, phase_gate);  // TBV
+    logsin_val = vblendv(vset1(0x1000), logsin_val, phase_gate);
 
     // Compute exponential output
     aymo16_t exp_in = vblendv(phase_out, logsin_val, sg->wg_sine_gate);
     aymo16_t exp_level = vadd(exp_in, vslli(sg->eg_out, 3));
-    exp_level = vminu(exp_level, vset1(0x1FFF));  // TBV: needed?
-    aymo16_t exp_level_lo = vand(exp_level, vset1(0xFF));
+    exp_level = vminu(exp_level, vset1(0x1FFF));
+    aymo16_t exp_level_lo = exp_level;  // vgather() masks to low byte
     aymo16_t exp_level_hi = vsrli(exp_level, 8);
     aymo16_t exp_value = vgather(aymo_(exp_x2_table), exp_level_lo);
     aymo16_t exp_out = vsrlv(exp_value, exp_level_hi);
@@ -481,7 +478,7 @@ void aymo_(eg_update)(
     // Compute envelope output
     sg->eg_out = vadd(
         vadd(sg->eg_rout, sg->eg_tl_x4),
-        vadd(sg->eg_ksl_sh, vand(chip->eg_tremolo, sg->eg_am))
+        vadd(sg->eg_ksl_sh, sg->eg_tremolo_am)
     );
 
     // Compute rate
@@ -489,8 +486,8 @@ void aymo_(eg_update)(
     aymo16_t notreset = vcmpz(vand(sg->eg_key, eg_gen_rel));
     sg->pg_notreset = notreset;
     aymo16_t eg_gen_mullo = vblendv(vset1(AYMO_(EG_GEN_MULLO_ATTACK)), sg->eg_gen_mullo, notreset);
-    aymo16_t reg_rate = vmululo(sg->eg_adsr, eg_gen_mullo);  // top nibble
-    aymo16_t rate_temp = vand(reg_rate, vset1(0xF000));
+    aymo16_t reg_rate = vmululo(sg->eg_adsr, eg_gen_mullo);  // move to top nibble
+    aymo16_t rate_temp = vand(reg_rate, vset1(0xF000));  // keep top nibble
     rate_temp = vsrli(rate_temp, AYMO_(EG_GEN_SRLHI));
     aymo16_t rate = vadd(sg->eg_ks, rate_temp);
     aymo16_t rate_lo = vand(rate, vset1(3));
@@ -502,8 +499,9 @@ void aymo_(eg_update)(
     aymo16_t rate_pre_lt12 = vor(vslli(rate_lo, 1), vset1(8));
     aymo16_t shift_lt12 = vsrlv(rate_pre_lt12, vsubsu(vset1(15), eg_shift));
     shift_lt12 = vand(shift_lt12, chip->eg_statev);
-
-    aymo16_t incstep_ge12 = vand(vsrlv(chip->eg_incstep, rate_lo), vset1(1));
+    
+    aymo16_t rate_lo_muluhi = vslli(vpow2m1lt4(rate_lo), 1);
+    aymo16_t incstep_ge12 = vand(vmuluhi(chip->eg_incstep, rate_lo_muluhi), vset1(1));
     aymo16_t shift_ge12 = vadd(vand(rate_hi, vset1(3)), incstep_ge12);
     shift_ge12 = vminu(shift_ge12, vset1(3));
     shift_ge12 = vblendv(shift_ge12, chip->eg_statev, vcmpz(shift_ge12));
@@ -559,23 +557,16 @@ void aymo_(eg_update)(
 
 // Updates phase generator
 AYMO_INLINE
-void aymo_(pg_update)(
+void aymo_(pg_update_deltafreq)(
     struct aymo_(chip)* chip,
     struct aymo_(ch2x_group)* cg,
     struct aymo_(slot_group)* sg
 )
 {
-    // Compute phase output
-    aymo16_t phase_out_mask = vvset1(0xFFFF);
-    aymo16_t phase_out_lo = vand(vvsrli(sg->pg_phase_lo, 9), phase_out_mask);
-    aymo16_t phase_out_hi = vand(vvsrli(sg->pg_phase_hi, 9), phase_out_mask);
-    aymo16_t phase_out = vpackus(phase_out_lo, phase_out_hi);
-    sg->pg_phase_out = phase_out;
-
     // Update phase
     aymo16_t fnum = cg->pg_fnum;
     aymo16_t range = vand(fnum, vset1(7 << 7));
-    range = vmulihi(range, vand(sg->pg_vib, chip->pg_vib_mulhi));
+    range = vmulihi(range, vand(sg->pg_vib, chip->pg_vib_mulhi));  
     range = vsub(vxor(range, chip->pg_vib_neg), chip->pg_vib_neg);  // flip sign
     fnum = vadd(fnum, range);
 
@@ -589,12 +580,34 @@ void aymo_(pg_update)(
     aymo32_t pg_mult_x2_hi = vunpackhi(sg->pg_mult_x2, vsetz());
     aymo32_t deltafreq_lo = vvsrli(vvmullo(basefreq_lo, pg_mult_x2_lo), 1);
     aymo32_t deltafreq_hi = vvsrli(vvmullo(basefreq_hi, pg_mult_x2_hi), 1);
+    sg->pg_deltafreq_lo = deltafreq_lo;
+    sg->pg_deltafreq_hi = deltafreq_hi;
+}
+
+// Updates phase generator
+AYMO_INLINE
+void aymo_(pg_update)(
+    struct aymo_(chip)* chip,
+    struct aymo_(ch2x_group)* cg,
+    struct aymo_(slot_group)* sg
+)
+{
+    (void)cg;
+
+    // Compute phase output
+    aymo16_t phase_out_mask = vvset1(0xFFFF);
+    aymo16_t phase_out_lo = vand(vvsrli(sg->pg_phase_lo, 9), phase_out_mask);
+    aymo16_t phase_out_hi = vand(vvsrli(sg->pg_phase_hi, 9), phase_out_mask);
+    aymo16_t phase_out = vpackus(phase_out_lo, phase_out_hi);
+    sg->pg_phase_out = phase_out;
+
+    // Update phase
     aymo32_t notreset_lo = vunpacklo(sg->pg_notreset, sg->pg_notreset);
     aymo32_t notreset_hi = vunpackhi(sg->pg_notreset, sg->pg_notreset);
-    aymo32_t pg_phase_lo = vand(notreset_lo, sg->pg_phase_lo);
-    aymo32_t pg_phase_hi = vand(notreset_hi, sg->pg_phase_hi);
-    sg->pg_phase_lo = vvadd(pg_phase_lo, deltafreq_lo);
-    sg->pg_phase_hi = vvadd(pg_phase_hi, deltafreq_hi);
+    aymo32_t pg_phase_lo = vvand(notreset_lo, sg->pg_phase_lo);
+    aymo32_t pg_phase_hi = vvand(notreset_hi, sg->pg_phase_hi);
+    sg->pg_phase_lo = vvadd(pg_phase_lo, sg->pg_deltafreq_lo);
+    sg->pg_phase_hi = vvadd(pg_phase_hi, sg->pg_deltafreq_hi);
 }
 
 
@@ -750,17 +763,23 @@ void aymo_(og_update)(struct aymo_(chip)* chip)
 AYMO_INLINE
 void aymo_(tm_update)(struct aymo_(chip)* chip)
 {
-    // Update timed effects timer (tremolo and vibrato)
+    // Update tremolo
     if ((chip->tm_timer & 0x3F) == 0x3F) {
         chip->eg_tremolopos = ((chip->eg_tremolopos + 1) % 210);
-    }
-    uint16_t eg_tremolopos = chip->eg_tremolopos;
-    if (eg_tremolopos >= 105) {
-        eg_tremolopos = 210 - eg_tremolopos;
-    }
-    uint16_t eg_tremolo = (eg_tremolopos >> chip->eg_tremoloshift);
-    chip->eg_tremolo = vset1((short)eg_tremolo);
 
+        uint16_t eg_tremolopos = chip->eg_tremolopos;
+        if (eg_tremolopos >= 105) {
+            eg_tremolopos = 210 - eg_tremolopos;
+        }
+        aymo16_t eg_tremolo = vset1((int16_t)(eg_tremolopos >> chip->eg_tremoloshift));
+
+        for (int8_t sgi = 0; sgi < AYMO_(SLOT_GROUP_NUM); ++sgi) {
+            struct aymo_(slot_group)* sg = &chip->sg[sgi];
+            sg->eg_tremolo_am = vand(eg_tremolo, sg->eg_am);
+        }
+    }
+
+    // Update vibrato
     if ((chip->tm_timer & 0x3FF) == 0x3FF) {
         chip->pg_vibpos = ((chip->pg_vibpos + 1) & 7);
         uint8_t vibpos = chip->pg_vibpos;
@@ -781,11 +800,17 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
         }
         chip->pg_vib_mulhi = vset1(pg_vib_mulhi);
         chip->pg_vib_neg = vset1(pg_vib_neg);
+
+        for (int8_t sgi = 0; sgi < AYMO_(SLOT_GROUP_NUM); ++sgi) {
+            struct aymo_(ch2x_group)* cg = &chip->cg[sgi / 2];
+            struct aymo_(slot_group)* sg = &chip->sg[sgi];
+            aymo_(pg_update_deltafreq)(chip, cg, sg);
+        }
     }
 
     chip->tm_timer++;
-    int16_t eg_incstep = aymo_(eg_incstep_table)[chip->tm_timer & 3];
-    chip->eg_incstep = vset1(eg_incstep);
+    uint16_t eg_incstep = aymo_(eg_incstep_table)[chip->tm_timer & 3];
+    chip->eg_incstep = vset1((int16_t)eg_incstep);
 
     // Update timed envelope patterns
     int16_t eg_shift = (int16_t)ffsll((long long)chip->eg_timer);
@@ -916,8 +941,28 @@ void aymo_(chip_pg_update_nts)(struct aymo_(chip)* chip)
 }
 
 
-AYMO_STATIC
-void aymo_(pg_update_fnum)(
+AYMO_INLINE
+void aymo_(pg_update_fnum_sg)(
+    struct aymo_(chip)* chip, int8_t word, 
+    int16_t eg_ksv
+)
+{
+    int8_t sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
+    int8_t sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
+    struct aymo_(slot_group)* sg = &(chip->sg[sgi]);
+
+    int8_t slot = aymo_(word_to_slot)[word];
+    struct aymo_(reg_20h)* reg_20h = &(chip->slot_regs[slot].reg_20h);
+    int16_t ks = (eg_ksv >> ((reg_20h->ksr ^ 1) << 1));
+    
+    sg->eg_ks = vinsertn(sg->eg_ks, ks, sgo);
+
+    aymo_(eg_update_ksl)(chip, word);
+}
+
+
+AYMO_INLINE
+void aymo_(pg_update_fnum_cg)(
     struct aymo_(chip)* chip, int8_t word,
     int16_t pg_fnum, int16_t eg_ksv, int16_t pg_block
 )
@@ -926,18 +971,13 @@ void aymo_(pg_update_fnum)(
     int8_t sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
     int8_t cgi = (sgi / 2);
     struct aymo_(ch2x_group)* cg = &(chip->cg[cgi]);
-    struct aymo_(slot_group)* sg = &(chip->sg[sgi]);
+    struct aymo_(ch2x_group)* sg = &(chip->sg[sgi]);
 
-    int8_t slot = aymo_(word_to_slot)[word];
-    struct aymo_(reg_20h)* reg_20h = &(chip->slot_regs[slot].reg_20h);
-    int16_t ks = (eg_ksv >> ((reg_20h->ksr ^ 1) << 1));
+    cg->pg_block = vinsertn(cg->pg_block, pg_block, sgo);
+    cg->pg_fnum  = vinsertn(cg->pg_fnum,  pg_fnum,  sgo);
+    cg->eg_ksv   = vinsertn(cg->eg_ksv,   eg_ksv,   sgo);
 
-    cg->pg_block = vinsertn(cg->pg_block, pg_block, sgo);  // TODO: move out to optimize two slot calls
-    cg->pg_fnum  = vinsertn(cg->pg_fnum,  pg_fnum,  sgo);  // TODO: move out to optimize two slot calls
-    cg->eg_ksv   = vinsertn(cg->eg_ksv,   eg_ksv,   sgo);  // TODO: move out to optimize two slot calls
-    sg->eg_ks    = vinsertn(sg->eg_ks,    ks,       sgo);
-
-    aymo_(eg_update_ksl)(chip, word);
+    aymo_(pg_update_deltafreq)(chip, cg, sg);
 }
 
 
@@ -948,24 +988,26 @@ void aymo_(ch2x_update_fnum)(struct aymo_(chip)* chip, int8_t ch2x, int8_t ch2p)
     struct aymo_(reg_B0h)* reg_B0h = &(chip->ch2x_regs[ch2x].reg_B0h);
     struct aymo_(reg_08h)* reg_08h = &(chip->chip_regs.reg_08h);
     int16_t pg_fnum = (int16_t)(reg_A0h->fnum_lo | ((uint16_t)reg_B0h->fnum_hi << 8));
-    int16_t eg_ksv = ((reg_B0h->block << 1) | ((pg_fnum >> (9 - reg_08h->nts)) & 1));
-    int16_t pg_block = reg_B0h->block;
-
+    int16_t pg_block = (int16_t)reg_B0h->block;
+    int16_t eg_ksv = ((pg_block << 1) | ((pg_fnum >> (9 - reg_08h->nts)) & 1));
+    
     int8_t ch2x_word0 = aymo_(ch2x_to_word)[ch2x][0];
     int8_t ch2x_word1 = aymo_(ch2x_to_word)[ch2x][1];
-    aymo_(pg_update_fnum)(chip, ch2x_word0, pg_fnum, eg_ksv, pg_block);
-    aymo_(pg_update_fnum)(chip, ch2x_word1, pg_fnum, eg_ksv, pg_block);
+    aymo_(pg_update_fnum_sg)(chip, ch2x_word0, eg_ksv);
+    aymo_(pg_update_fnum_sg)(chip, ch2x_word1, eg_ksv);
+    aymo_(pg_update_fnum_cg)(chip, ch2x_word0, pg_fnum, eg_ksv, pg_block);
 
     if (ch2p >= 0) {
         int8_t ch2p_word0 = aymo_(ch2x_to_word)[ch2p][0];
         int8_t ch2p_word1 = aymo_(ch2x_to_word)[ch2p][1];
-        aymo_(pg_update_fnum)(chip, ch2p_word0, pg_fnum, eg_ksv, pg_block);
-        aymo_(pg_update_fnum)(chip, ch2x_word1, pg_fnum, eg_ksv, pg_block);
+        aymo_(pg_update_fnum_sg)(chip, ch2p_word0, eg_ksv);
+        aymo_(pg_update_fnum_sg)(chip, ch2x_word1, eg_ksv);
+        aymo_(pg_update_fnum_cg)(chip, ch2p_word0, pg_fnum, eg_ksv, pg_block);
     }
 }
 
 
-AYMO_STATIC
+AYMO_INLINE
 void aymo_(eg_key_on)(struct aymo_(chip)* chip, int8_t word, int16_t mode)
 {
     int8_t sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
@@ -977,7 +1019,7 @@ void aymo_(eg_key_on)(struct aymo_(chip)* chip, int8_t word, int16_t mode)
 }
 
 
-AYMO_STATIC
+AYMO_INLINE
 void aymo_(eg_key_off)(struct aymo_(chip)* chip, int8_t word, int16_t mode)
 {
     int8_t sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
@@ -994,7 +1036,7 @@ void aymo_(ch2x_key_on)(struct aymo_(chip)* chip, int8_t ch2x)
 {
     if (chip->chip_regs.reg_105h.newm) {
         uint32_t ch2x_is_pairing = (chip->og_ch2x_pairing & (1UL << ch2x));
-        uint32_t ch2x_is_drum = (chip->og_ch2x_drum & (1UL << ch2x));
+        uint32_t ch2x_is_drum    = (chip->og_ch2x_drum    & (1UL << ch2x));
         int8_t ch2p = aymo_(ch2x_paired)[ch2x];
         int8_t ch2x_is_secondary = (ch2p < ch2x);
 
@@ -1029,7 +1071,7 @@ void aymo_(ch2x_key_off)(struct aymo_(chip)* chip, int8_t ch2x)
 {
     if (chip->chip_regs.reg_105h.newm) {
         uint32_t ch2x_is_pairing = (chip->og_ch2x_pairing & (1UL << ch2x));
-        uint32_t ch2x_is_drum = (chip->og_ch2x_drum & (1UL << ch2x));
+        uint32_t ch2x_is_drum    = (chip->og_ch2x_drum    & (1UL << ch2x));
         int8_t ch2p = aymo_(ch2x_paired)[ch2x];
         int8_t ch2x_is_secondary = (ch2p < ch2x);
 
@@ -1305,10 +1347,12 @@ void aymo_(write_20h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     struct aymo_(reg_20h)* reg_20h = &(chip->slot_regs[slot].reg_20h);
     struct aymo_(reg_20h) reg_20h_prev = *reg_20h;
     *(uint8_t*)(void*)reg_20h = value;
+    uint8_t update_deltafreq = 0;
 
     if (reg_20h->mult != reg_20h_prev.mult) {
         int16_t pg_mult_x2 = aymo_(pg_mult_x2_table)[reg_20h->mult];
         sg->pg_mult_x2 = vinsertn(sg->pg_mult_x2, pg_mult_x2, sgo);
+        update_deltafreq = 1;  // force
     }
 
     if (reg_20h->ksr != reg_20h_prev.ksr) {
@@ -1327,11 +1371,27 @@ void aymo_(write_20h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     if (reg_20h->vib != reg_20h_prev.vib) {
         int16_t pg_vib = (reg_20h->vib ? -1 : 0);
         sg->pg_vib = vinsertn(sg->pg_vib, pg_vib, sgo);
+        update_deltafreq = 1;  // force
     }
 
     if (reg_20h->am != reg_20h_prev.am) {
         int16_t eg_am = (reg_20h->am ? -1 : 0);
         sg->eg_am = vinsertn(sg->eg_am, eg_am, sgo);
+
+        uint16_t eg_tremolopos = chip->eg_tremolopos;
+        if (eg_tremolopos >= 105) {
+            eg_tremolopos = (210 - eg_tremolopos);
+        }
+        aymo16_t eg_tremolo = vset1((int16_t)(eg_tremolopos >> chip->eg_tremoloshift));
+        sg->eg_tremolo_am = vand(eg_tremolo, sg->eg_am);
+    }
+
+    if (update_deltafreq) {
+        for (int8_t sgi = 0; sgi < AYMO_(SLOT_GROUP_NUM); ++sgi) {
+            struct aymo_(ch2x_group)* cg = &chip->cg[sgi / 2];
+            struct aymo_(slot_group)* sg = &chip->sg[sgi];
+            aymo_(pg_update_deltafreq)(chip, cg, sg);
+        }
     }
 }
 
