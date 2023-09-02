@@ -36,7 +36,19 @@
     <ClInclude Include="aymo_ymf262_x86_avx2_specs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aymo_arch_x86_sse41_macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aymo_arch_x86_sse41_specs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="aymo_cc_specs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aymo_ymf262_x86_sse41_macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aymo_ymf262_x86_sse41_specs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -54,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="aymo_ymf262_x86_avx2.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aymo_ymf262_x86_sse41.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
