@@ -429,6 +429,7 @@ static void OPL3_EnvelopeCalc(opl3_slot *slot)
     ks = slot->channel->ksv >> ((slot->reg_ksr ^ 1) << 1);
     nonzero = (reg_rate != 0);
     rate = ks + (reg_rate << 2);
+    slot->eg_rate = rate;
     rate_hi = rate >> 2;
     rate_lo = rate & 0x03;
     if (rate_hi & 0x10)
@@ -519,6 +520,7 @@ static void OPL3_EnvelopeCalc(opl3_slot *slot)
         }
         break;
     }
+    slot->eg_inc = eg_inc;
     slot->eg_rout = (eg_rout + eg_inc) & 0x1ff;
     /* Key off */
     if (reset)
