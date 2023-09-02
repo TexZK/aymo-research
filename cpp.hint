@@ -1,6 +1,8 @@
 // Hint files help the Visual Studio IDE interpret Visual C++ identifiers
 // such as names of functions and macros.
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
-#define AYMO_INLINE
 #define AYMO_(_token_)
 #define aymo_(_token_)
+#define AYMO_ALIGN_V16
+#define AYMO_INLINE
+#define AYMO_STATIC
