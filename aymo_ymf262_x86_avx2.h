@@ -18,10 +18,10 @@ You should have received a copy of the GNU Lesser General Public License
 along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef include_aymo_ymf262_x86_avx2_specs_h_
-#define include_aymo_ymf262_x86_avx2_specs_h_
+#ifndef include_aymo_ymf262_x86_avx2_h_
+#define include_aymo_ymf262_x86_avx2_h_
 
-#include "aymo_arch_x86_avx2_specs.h"
+#include "aymo_arch_x86_avx2.h"
 
 #include <stdint.h>
 
@@ -33,8 +33,8 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 
 #undef AYMO_
 #undef aymo_
-#define AYMO_(TOKEN)    AYMO_YMF262_X86_AVX2_##TOKEN
-#define aymo_(token)    aymo_ymf262_x86_avx2_##token
+#define AYMO_(_token_)  AYMO_YMF262_X86_AVX2_##_token_
+#define aymo_(_token_)  aymo_ymf262_x86_avx2_##_token_
 
 
 #define AYMO_YMF262_X86_AVX2_SLOT_NUM_MAX           64
@@ -405,13 +405,8 @@ void aymo_(init)(struct aymo_(chip)* chip);
 #endif
 
 
-#if !defined(CONFIG_AYMO_KEEP_SHORTHANDS)
-    #undef AYMO_
-    #undef aymo_
-#endif  // CONFIG_AYMO_KEEP_SHORTHANDS
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
 
-#endif  // include_aymo_ymf262_x86_avx2_specs_h_
+#endif  // include_aymo_ymf262_x86_avx2_h_

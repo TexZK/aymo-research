@@ -21,7 +21,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #ifndef include_aymo_arch_x86_avx2_macros_h_
 #define include_aymo_arch_x86_avx2_macros_h_
 
-#include "aymo_arch_x86_avx2_specs.h"
+#include "aymo_arch_x86_avx2.h"
 
 #include <intrin.h>
 #include <stdint.h>

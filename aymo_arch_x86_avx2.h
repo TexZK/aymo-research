@@ -18,12 +18,12 @@ You should have received a copy of the GNU Lesser General Public License
 along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef include_aymo_arch_x86_sse41_specs_h_
-#define include_aymo_arch_x86_sse41_specs_h_
+#ifndef include_aymo_arch_x86_avx2_h_
+#define include_aymo_arch_x86_avx2_h_
 
-#include "aymo_cc_specs.h"
+#include "aymo_cc.h"
 
-#include <smmintrin.h>
+#include <immintrin.h>
 
 
 #ifdef __cplusplus
@@ -31,12 +31,12 @@ extern "C" {
 #endif  // __cplusplus
 
 
-typedef __m128i aymo16_t;
-typedef __m128i aymo32_t;
+typedef __m256i aymo16_t;
+typedef __m256i aymo32_t;
 
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
 
-#endif  // include_aymo_arch_x86_sse41_specs_h_
+#endif  // include_aymo_arch_x86_avx2_h_

@@ -144,15 +144,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aymo_arch_x86_avx2.h" />
     <ClInclude Include="aymo_arch_x86_avx2_macros.h" />
-    <ClInclude Include="aymo_arch_x86_avx2_specs.h" />
+    <ClInclude Include="aymo_arch_x86_sse41.h" />
     <ClInclude Include="aymo_arch_x86_sse41_macros.h" />
-    <ClInclude Include="aymo_arch_x86_sse41_specs.h" />
-    <ClInclude Include="aymo_cc_specs.h" />
-    <ClInclude Include="aymo_ymf262_x86_avx2_macros.h" />
-    <ClInclude Include="aymo_ymf262_x86_avx2_specs.h" />
-    <ClInclude Include="aymo_ymf262_x86_sse41_macros.h" />
-    <ClInclude Include="aymo_ymf262_x86_sse41_specs.h" />
+    <ClInclude Include="aymo_cc.h" />
+    <ClInclude Include="aymo_ymf262_x86_avx2.h" />
+    <ClInclude Include="aymo_ymf262_x86_sse41.h" />
     <ClInclude Include="imf.h" />
     <ClInclude Include="opl3.h" />
     <ClInclude Include="regdump.h" />

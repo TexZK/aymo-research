@@ -18,8 +18,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef include_aymo_cc_specs_h_
-#define include_aymo_cc_specs_h_
+#ifndef include_aymo_cc_h_
+#define include_aymo_cc_h_
 
 
 #if (defined(_DEBUG) && !defined(NDEBUG))
@@ -58,4 +58,4 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #define AYMO_ALIGN_V16  AYMO_ALIGN(64)
 
 
-#endif  // include_aymo_cc_specs_h_
+#endif  // include_aymo_cc_h_

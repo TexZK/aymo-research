@@ -18,8 +18,13 @@ You should have received a copy of the GNU Lesser General Public License
 along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
-//#include "aymo_ymf262_x86_avx2_macros.h"
-#include "aymo_ymf262_x86_sse41_macros.h"
+#if 1
+    #include "aymo_ymf262_x86_sse41.h"
+    #include "aymo_arch_x86_sse41_macros.h"
+#else
+    #include "aymo_ymf262_x86_avx2.h"
+    #include "aymo_arch_x86_avx2_macros.h"
+#endif
 
 #include "imf.h"
 #include "opl3.h"
@@ -85,7 +90,7 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     int word = aymo_(slot_to_word)[slot_];
     int sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
     int sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
-#ifdef include_aymo_arch_x86_sse41_macros_h_
+#ifdef include_aymo_arch_x86_sse41_h_
     int cgi = (((sgi / 4) * 2) | (sgi % 2));
 #else
     int cgi = (sgi / 2);
@@ -122,7 +127,7 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     assert((uint16_t)-vextractn(sg->pg_notreset, sgo) == !slot->pg_reset);
     const int sgo_side[16] = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1 };
     const int sgo_cell[16] = { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7 };
-#ifdef include_aymo_arch_x86_sse41_macros_h_
+#ifdef include_aymo_arch_x86_sse41_h_
     uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m128i_u32 : sg->pg_phase_lo.m128i_u32)[sgo_cell[sgo]];
 #else
     uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m256i_u32 : sg->pg_phase_lo.m256i_u32)[sgo_cell[sgo]];
@@ -141,7 +146,7 @@ void compare_ch2xs(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     int word = aymo_(ch2x_to_word)[ch2x][0];
     int sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
     int sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
-#ifdef include_aymo_arch_x86_sse41_macros_h_
+#ifdef include_aymo_arch_x86_sse41_h_
     int cgi = (((sgi / 4) * 2) | (sgi % 2));
 #else
     int cgi = (sgi / 2);
@@ -465,7 +470,7 @@ void file_benchmark(void)
 
 void test_vhsum(void)
 {
-#ifdef include_aymo_arch_x86_sse41_macros_h_
+#ifdef include_aymo_arch_x86_sse41_h_
     aymo16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128);
     volatile int b = vhsum(a);
     assert(b == 255);

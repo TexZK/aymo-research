@@ -34,7 +34,8 @@ Thanks:
         YMF262 and VRC VII decaps and die shots.
 */
 
-#include "aymo_ymf262_x86_sse41_macros.h"
+#include "aymo_ymf262_x86_sse41.h"
+#include "aymo_arch_x86_sse41_macros.h"
 
 
 // Exponential look-up table
