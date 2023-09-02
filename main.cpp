@@ -18,7 +18,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#if 1
+#if 0
     #include "aymo_ymf262_x86_sse41.h"
     #include "aymo_arch_x86_sse41_macros.h"
 #else
@@ -378,7 +378,7 @@ void regdump_test_file(void)
 
     struct regdump_cmd cmd = { 0, 0, 1 };
     while (cmd.delaying < 2) {
-        //compare_chips(&aymo_chip, &nuked_chip);
+        compare_chips(&aymo_chip, &nuked_chip);
         cmd = regdump_opl_tick(&regdump_status);
         if (cmd.address) {
             //printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
@@ -471,11 +471,11 @@ void file_benchmark(void)
 void test_vhsum(void)
 {
 #ifdef include_aymo_arch_x86_sse41_h_
-    aymo16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128);
+    aymoi16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128);
     volatile int b = vhsum(a);
     assert(b == 255);
 #else
-    aymo16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, -32768);
+    aymoi16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, -32768);
     volatile int b = vhsum(a);
     assert(b == -1);
 #endif
@@ -491,10 +491,10 @@ int main(int argc, char* argv[])
 
     //imf_test_simple();
     //imf_test_file();
-    //regdump_test_file();
+    regdump_test_file();
 
     //silence_benchmark();
-    file_benchmark();
+    //file_benchmark();
 
     return EXIT_SUCCESS;
 }

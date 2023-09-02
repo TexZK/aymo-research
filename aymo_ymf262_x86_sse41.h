@@ -53,7 +53,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 
 // Wave descriptor for single slot
 struct aymo_(wave) {
-    int16_t wg_phase_mullo;
+    uint16_t wg_phase_mullo;
     int16_t wg_phase_zero;
     int16_t wg_phase_neg;
     int16_t wg_phase_flip;
@@ -247,58 +247,58 @@ struct aymo_(eg_adsr) {
 // Processing order (kinda)
 AYMO_ALIGN_V16
 struct aymo_(slot_group) {
-    aymo16_t wg_out;
-    aymo16_t wg_prout;
-    aymo16_t wg_fb_mulhi;
-    aymo16_t wg_fbmod_gate;
-    aymo16_t wg_prmod_gate;
-    aymo16_t wg_phase_mullo;
-    aymo16_t wg_phase_zero;
-    aymo16_t wg_phase_neg;
-    aymo16_t wg_phase_flip;
-    aymo16_t wg_phase_mask;
-    aymo16_t wg_sine_gate;
+    aymoi16_t wg_out;
+    aymoi16_t wg_prout;
+    aymoi16_t wg_fb_mulhi;
+    aymoi16_t wg_fbmod_gate;
+    aymoi16_t wg_prmod_gate;
+    aymoi16_t wg_phase_mullo;
+    aymoi16_t wg_phase_zero;
+    aymoi16_t wg_phase_neg;
+    aymoi16_t wg_phase_flip;
+    aymoi16_t wg_phase_mask;
+    aymoi16_t wg_sine_gate;
 
-    aymo16_t og_prout;
-    aymo16_t og_prout_ac;
-    aymo16_t og_prout_bd;
-    aymo16_t og_out_ch_gate_a;
-    aymo16_t og_out_ch_gate_c;
-    aymo16_t og_out_ch_gate_b;
-    aymo16_t og_out_ch_gate_d;
+    aymoi16_t og_prout;
+    aymoi16_t og_prout_ac;
+    aymoi16_t og_prout_bd;
+    aymoi16_t og_out_ch_gate_a;
+    aymoi16_t og_out_ch_gate_c;
+    aymoi16_t og_out_ch_gate_b;
+    aymoi16_t og_out_ch_gate_d;
 
-    aymo16_t eg_rout;
-    aymo16_t eg_tl_x4;
-    aymo16_t eg_ksl_sh;
-    aymo16_t eg_tremolo_am;
-    aymo16_t eg_out;
-    aymo16_t eg_gen;
-    aymo16_t eg_sl;
-    aymo16_t eg_key;            // bit 8 = drum, bit 0 = normal
-    aymo16_t pg_notreset;
-    aymo16_t eg_adsr;           // struct aymo_(eg_adsr)
-    aymo16_t eg_gen_mullo;      // depends on reg_type for reg_sr
-    aymo16_t eg_ks;
+    aymoi16_t eg_rout;
+    aymoi16_t eg_tl_x4;
+    aymoi16_t eg_ksl_sh;
+    aymoi16_t eg_tremolo_am;
+    aymoi16_t eg_out;
+    aymoi16_t eg_gen;
+    aymoi16_t eg_sl;
+    aymoi16_t eg_key;           // bit 8 = drum, bit 0 = normal
+    aymoi16_t pg_notreset;
+    aymoi16_t eg_adsr;          // struct aymo_(eg_adsr)
+    aymoi16_t eg_gen_mullo;     // depends on reg_type for reg_sr
+    aymoi16_t eg_ks;
 
-    aymo16_t pg_vib;
-    aymo16_t pg_mult_x2;
-    aymo32_t pg_deltafreq_lo;
-    aymo32_t pg_deltafreq_hi;
-    aymo32_t pg_phase_lo;
-    aymo32_t pg_phase_hi;
-    aymo16_t pg_phase_out;
+    aymoi16_t pg_vib;
+    aymoi16_t pg_mult_x2;
+    aymoi32_t pg_deltafreq_lo;
+    aymoi32_t pg_deltafreq_hi;
+    aymoi32_t pg_phase_lo;
+    aymoi32_t pg_phase_hi;
+    aymoi16_t pg_phase_out;
 
     // Updated only by writing registers
-    aymo16_t eg_am;
-    aymo16_t og_out_gate;
+    aymoi16_t eg_am;
+    aymoi16_t og_out_gate;
 
 #ifdef AYMO_DEBUG
     // Variables for debug
-    aymo16_t eg_ksl;
-    aymo16_t eg_rate;
-    aymo16_t eg_inc;
-    aymo16_t wg_fbmod;
-    aymo16_t wg_mod;
+    aymoi16_t eg_ksl;
+    aymoi16_t eg_rate;
+    aymoi16_t eg_inc;
+    aymoi16_t wg_fbmod;
+    aymoi16_t wg_mod;
 #endif  // AYMO_dEBUG
 };
 
@@ -306,16 +306,16 @@ struct aymo_(slot_group) {
 // Processing order (kinda)
 AYMO_ALIGN_V16
 struct aymo_(ch2x_group) {
-    aymo16_t pg_fnum;
-    aymo16_t pg_block;
+    aymoi16_t pg_fnum;
+    aymoi16_t pg_block;
 
     // Updated only by writing registers
-    aymo16_t eg_ksv;
+    aymoi16_t eg_ksv;
 
-    aymo16_t og_ch_gate_a;
-    aymo16_t og_ch_gate_b;
-    aymo16_t og_ch_gate_c;
-    aymo16_t og_ch_gate_d;
+    aymoi16_t og_ch_gate_a;
+    aymoi16_t og_ch_gate_b;
+    aymoi16_t og_ch_gate_c;
+    aymoi16_t og_ch_gate_d;
 
 #ifdef AYMO_DEBUG
     // Variables for debug
@@ -330,17 +330,17 @@ struct aymo_(chip) {
     struct aymo_(slot_group) sg[AYMO_(SLOT_GROUP_NUM)];
     struct aymo_(ch2x_group) cg[AYMO_(SLOT_GROUP_NUM) / 2];
 
-    aymo16_t wg_mod;
-    aymo16_t eg_statev;
-    aymo16_t eg_add;
-    aymo16_t eg_incstep;
-    aymo16_t pg_vib_mulhi;
-    aymo16_t pg_vib_neg;
+    aymoi16_t wg_mod;
+    aymoi16_t eg_statev;
+    aymoi16_t eg_add;
+    aymou16_t eg_incstep;
+    aymoi16_t pg_vib_mulhi;
+    aymoi16_t pg_vib_neg;
 
-    aymo16_t og_acc_a;
-    aymo16_t og_acc_c;
-    aymo16_t og_acc_b;
-    aymo16_t og_acc_d;
+    aymoi16_t og_acc_a;
+    aymoi16_t og_acc_c;
+    aymoi16_t og_acc_b;
+    aymoi16_t og_acc_d;
 
     // 64-bit data
     uint64_t eg_timer;

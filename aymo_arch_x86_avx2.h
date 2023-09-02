@@ -31,8 +31,11 @@ extern "C" {
 #endif  // __cplusplus
 
 
-typedef __m256i aymo16_t;
-typedef __m256i aymo32_t;
+typedef __m256i aymoi16_t;
+typedef __m256i aymou16_t;
+
+typedef __m256i aymoi32_t;
+typedef __m256i aymou32_t;
 
 
 #ifdef __cplusplus

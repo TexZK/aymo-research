@@ -446,49 +446,49 @@ void aymo_(wg_update)(
 )
 {
     // Compute feedback and modulation inputs
-    aymo16_t fbsum = vslli(vadd(sg->wg_out, sg->wg_prout), 1);
-    aymo16_t fbsum_sh = vmulihi(fbsum, sg->wg_fb_mulhi);
-    aymo16_t prmod = vand(chip->wg_mod, sg->wg_prmod_gate);
-    aymo16_t fbmod = vand(fbsum_sh, sg->wg_fbmod_gate);
+    aymoi16_t fbsum = vslli(vadd(sg->wg_out, sg->wg_prout), 1);
+    aymoi16_t fbsum_sh = vmulihi(fbsum, sg->wg_fb_mulhi);
+    aymoi16_t prmod = vand(chip->wg_mod, sg->wg_prmod_gate);
+    aymoi16_t fbmod = vand(fbsum_sh, sg->wg_fbmod_gate);
     sg->wg_prout = sg->wg_out;
 
     // Compute operator phase input
-    aymo16_t modsum = vadd(fbmod, prmod);
-    aymo16_t phase = vadd(sg->pg_phase_out, modsum);
+    aymoi16_t modsum = vadd(fbmod, prmod);
+    aymoi16_t phase = vadd(sg->pg_phase_out, modsum);
 
     // Process phase
-    aymo16_t phase_sped = vmululo(phase, sg->wg_phase_mullo);
-    aymo16_t phase_gate = vcmpz(vand(phase_sped, sg->wg_phase_zero));
-    aymo16_t phase_flip = vcmpp(vand(phase_sped, sg->wg_phase_flip));
-    aymo16_t phase_mask = sg->wg_phase_mask;
-    aymo16_t phase_xor = vand(phase_flip, phase_mask);
-    aymo16_t phase_idx = vxor(phase_sped, phase_xor);
-    aymo16_t phase_out = vand(vand(phase_gate, phase_mask), phase_idx);
+    aymoi16_t phase_sped = vu2i(vmululo(vi2u(phase), sg->wg_phase_mullo));
+    aymoi16_t phase_gate = vcmpz(vand(phase_sped, sg->wg_phase_zero));
+    aymoi16_t phase_flip = vcmpp(vand(phase_sped, sg->wg_phase_flip));
+    aymoi16_t phase_mask = sg->wg_phase_mask;
+    aymoi16_t phase_xor = vand(phase_flip, phase_mask);
+    aymoi16_t phase_idx = vxor(phase_sped, phase_xor);
+    aymoi16_t phase_out = vand(vand(phase_gate, phase_mask), phase_idx);
 
     // Compute logsin variant
-    aymo16_t phase_lo = phase_out;  // vgather() masks to low byte
-    aymo16_t logsin_val = vgather(aymo_(logsin_table), phase_lo);
+    aymoi16_t phase_lo = phase_out;  // vgather() masks to low byte
+    aymoi16_t logsin_val = vgather(aymo_(logsin_table), phase_lo);
     logsin_val = vblendv(vset1(0x1000), logsin_val, phase_gate);
 
     // Compute exponential output
-    aymo16_t exp_in = vblendv(phase_out, logsin_val, sg->wg_sine_gate);
-    aymo16_t exp_level = vadd(exp_in, vslli(sg->eg_out, 3));
-    exp_level = vminu(exp_level, vset1(0x1FFF));
-    aymo16_t exp_level_lo = exp_level;  // vgather() masks to low byte
-    aymo16_t exp_level_hi = vsrli(exp_level, 8);
-    aymo16_t exp_value = vgather(aymo_(exp_x2_table), exp_level_lo);
-    aymo16_t exp_out = vsrlv(exp_value, exp_level_hi);
+    aymoi16_t exp_in = vblendv(phase_out, logsin_val, sg->wg_sine_gate);
+    aymoi16_t exp_level = vadd(exp_in, vslli(sg->eg_out, 3));
+    exp_level = vu2i(vminu(vi2u(exp_level), vi2u(vset1(0x1FFF))));
+    aymoi16_t exp_level_lo = exp_level;  // vgather() masks to low byte
+    aymoi16_t exp_level_hi = vsrli(exp_level, 8);
+    aymoi16_t exp_value = vgather(aymo_(exp_x2_table), exp_level_lo);
+    aymoi16_t exp_out = vsrlv(exp_value, exp_level_hi);
 
     // Compute operator wave output
-    aymo16_t wave_pos = vcmpz(vand(phase_sped, sg->wg_phase_neg));
-    aymo16_t wave_neg = vandnot(wave_pos, phase_gate);
-    aymo16_t wave_out = vxor(exp_out, wave_neg);
+    aymoi16_t wave_pos = vcmpz(vand(phase_sped, sg->wg_phase_neg));
+    aymoi16_t wave_neg = vandnot(wave_pos, phase_gate);
+    aymoi16_t wave_out = vxor(exp_out, wave_neg);
     sg->wg_out = wave_out;
     chip->wg_mod = wave_out;
 
     // Update chip output accumulators, with quirky slot output delay
-    aymo16_t og_out_ac = vblendv(wave_out, sg->og_prout, sg->og_prout_ac);
-    aymo16_t og_out_bd = vblendv(wave_out, sg->og_prout, sg->og_prout_bd);
+    aymoi16_t og_out_ac = vblendv(wave_out, sg->og_prout, sg->og_prout_ac);
+    aymoi16_t og_out_bd = vblendv(wave_out, sg->og_prout, sg->og_prout_bd);
     sg->og_prout = wave_out;
     chip->og_acc_a = vadd(chip->og_acc_a, vand(og_out_ac, sg->og_out_ch_gate_a));
     chip->og_acc_c = vadd(chip->og_acc_c, vand(og_out_ac, sg->og_out_ch_gate_c));
@@ -519,61 +519,61 @@ void aymo_(eg_update)(
     );
 
     // Compute rate
-    aymo16_t eg_gen_rel = vcmpeq(sg->eg_gen, vset1(AYMO_(EG_GEN_RELEASE)));
-    aymo16_t notreset = vcmpz(vand(sg->eg_key, eg_gen_rel));
+    aymoi16_t eg_gen_rel = vcmpeq(sg->eg_gen, vset1(AYMO_(EG_GEN_RELEASE)));
+    aymoi16_t notreset = vcmpz(vand(sg->eg_key, eg_gen_rel));
     sg->pg_notreset = notreset;
-    aymo16_t eg_gen_mullo = vblendv(vset1(AYMO_(EG_GEN_MULLO_ATTACK)), sg->eg_gen_mullo, notreset);
-    aymo16_t reg_rate = vmululo(sg->eg_adsr, eg_gen_mullo);  // move to top nibble
-    aymo16_t rate_temp = vand(reg_rate, vset1(0xF000));  // keep top nibble
+    aymoi16_t eg_gen_mullo = vblendv(vset1(AYMO_(EG_GEN_MULLO_ATTACK)), sg->eg_gen_mullo, notreset);
+    aymoi16_t reg_rate = vu2i(vmululo(vi2u(sg->eg_adsr), vi2u(eg_gen_mullo)));  // move to top nibble
+    aymoi16_t rate_temp = vand(reg_rate, vset1(0xF000));  // keep top nibble
     rate_temp = vsrli(rate_temp, AYMO_(EG_GEN_SRLHI));
-    aymo16_t rate = vadd(sg->eg_ks, rate_temp);
-    aymo16_t rate_lo = vand(rate, vset1(3));
-    aymo16_t rate_hi = vsrli(rate, 2);
+    aymoi16_t rate = vadd(sg->eg_ks, rate_temp);
+    aymoi16_t rate_lo = vand(rate, vset1(3));
+    aymoi16_t rate_hi = vsrli(rate, 2);
     rate_hi = vminu(rate_hi, vset1(15));
 
     // Compute shift
-    aymo16_t eg_shift = vadd(rate_hi, chip->eg_add);
-    aymo16_t rate_pre_lt12 = vor(vslli(rate_lo, 1), vset1(8));
-    aymo16_t shift_lt12 = vsrlv(rate_pre_lt12, vsubsu(vset1(15), eg_shift));
+    aymoi16_t eg_shift = vadd(rate_hi, chip->eg_add);
+    aymoi16_t rate_pre_lt12 = vor(vslli(rate_lo, 1), vset1(8));
+    aymoi16_t shift_lt12 = vsrlv(rate_pre_lt12, vsubsu(vset1(15), eg_shift));
     shift_lt12 = vand(shift_lt12, chip->eg_statev);
 
-    aymo16_t rate_lo_muluhi = vslli(vpow2m1lt4(rate_lo), 1);
-    aymo16_t incstep_ge12 = vand(vmuluhi(chip->eg_incstep, rate_lo_muluhi), vset1(1));
-    aymo16_t shift_ge12 = vadd(vand(rate_hi, vset1(3)), incstep_ge12);
+    aymou16_t rate_lo_muluhi = vi2u(vslli(vpow2m1lt4(rate_lo), 1));
+    aymoi16_t incstep_ge12 = vand(vu2i(vmuluhi(chip->eg_incstep, rate_lo_muluhi)), vset1(1));
+    aymoi16_t shift_ge12 = vadd(vand(rate_hi, vset1(3)), incstep_ge12);
     shift_ge12 = vminu(shift_ge12, vset1(3));
     shift_ge12 = vblendv(shift_ge12, chip->eg_statev, vcmpz(shift_ge12));
 
-    aymo16_t shift = vblendv(shift_lt12, shift_ge12, vcmpgt(rate_hi, vset1(11)));
+    aymoi16_t shift = vblendv(shift_lt12, shift_ge12, vcmpgt(rate_hi, vset1(11)));
     shift = vandnot(vcmpz(rate_temp), shift);
 
     // Instant attack
-    aymo16_t eg_rout = sg->eg_rout;
+    aymoi16_t eg_rout = sg->eg_rout;
     eg_rout = vandnot(vandnot(notreset, vcmpeq(rate_hi, vset1(15))), eg_rout);
 
     // Envelope off
-    aymo16_t eg_off = vcmpgt(sg->eg_rout, vset1(0x01F7));
-    aymo16_t eg_gen_natk_and_nrst = vand(vcmpp(sg->eg_gen), notreset);
+    aymoi16_t eg_off = vcmpgt(sg->eg_rout, vset1(0x01F7));
+    aymoi16_t eg_gen_natk_and_nrst = vand(vcmpp(sg->eg_gen), notreset);
     eg_rout = vblendv(eg_rout, vset1(0x01FF), vand(eg_gen_natk_and_nrst, eg_off));
 
     // Compute common increment not in attack state
-    aymo16_t eg_inc_natk_cond = vand(vand(notreset, vcmpz(eg_off)), vcmpp(shift));
-    aymo16_t eg_inc_natk = vand(eg_inc_natk_cond, vpow2m1lt4(shift));
-    aymo16_t eg_gen = sg->eg_gen;
+    aymoi16_t eg_inc_natk_cond = vand(vand(notreset, vcmpz(eg_off)), vcmpp(shift));
+    aymoi16_t eg_inc_natk = vand(eg_inc_natk_cond, vpow2m1lt4(shift));
+    aymoi16_t eg_gen = sg->eg_gen;
 
     // Move attack to decay state
-    aymo16_t eg_inc_atk_cond = vand(vand(vcmpp(sg->eg_key), vcmpp(shift)),
+    aymoi16_t eg_inc_atk_cond = vand(vand(vcmpp(sg->eg_key), vcmpp(shift)),
                                     vand(vcmpz(sg->eg_gen), vcmpgt(vset1(15), rate_hi)));
-    aymo16_t eg_inc_atk_ninc = vsrlv(sg->eg_rout, vsub(vset1(4), shift));
-    aymo16_t eg_inc = vandnot(eg_inc_atk_ninc, eg_inc_atk_cond);
-    aymo16_t eg_gen_atk_to_dec = vcmpz(vor(sg->eg_gen, sg->eg_rout));
+    aymoi16_t eg_inc_atk_ninc = vsrlv(sg->eg_rout, vsub(vset1(4), shift));
+    aymoi16_t eg_inc = vandnot(eg_inc_atk_ninc, eg_inc_atk_cond);
+    aymoi16_t eg_gen_atk_to_dec = vcmpz(vor(sg->eg_gen, sg->eg_rout));
     eg_gen = vsub(eg_gen, eg_gen_atk_to_dec);  // 0 --> 1
     eg_inc = vblendv(eg_inc_natk, eg_inc, vcmpz(sg->eg_gen));
     eg_inc = vandnot(eg_gen_atk_to_dec, eg_inc);
 
     // Move decay to sustain state
-    aymo16_t eg_gen_dec = vcmpeq(sg->eg_gen, vset1(AYMO_(EG_GEN_DECAY)));
-    aymo16_t sl_hit = vcmpeq(vsrli(sg->eg_rout, 4), sg->eg_sl);
-    aymo16_t eg_gen_dec_to_sus = vand(eg_gen_dec, sl_hit);
+    aymoi16_t eg_gen_dec = vcmpeq(sg->eg_gen, vset1(AYMO_(EG_GEN_DECAY)));
+    aymoi16_t sl_hit = vcmpeq(vsrli(sg->eg_rout, 4), sg->eg_sl);
+    aymoi16_t eg_gen_dec_to_sus = vand(eg_gen_dec, sl_hit);
     eg_gen = vsub(eg_gen, eg_gen_dec_to_sus);  // 1 --> 2
     eg_inc = vandnot(eg_gen_dec_to_sus, eg_inc);
 
@@ -606,22 +606,22 @@ void aymo_(pg_update_deltafreq)(
 )
 {
     // Update phase
-    aymo16_t fnum = cg->pg_fnum;
-    aymo16_t range = vand(fnum, vset1(7 << 7));
+    aymoi16_t fnum = cg->pg_fnum;
+    aymoi16_t range = vand(fnum, vset1(7 << 7));
     range = vmulihi(range, vand(sg->pg_vib, chip->pg_vib_mulhi));
     range = vsub(vxor(range, chip->pg_vib_neg), chip->pg_vib_neg);  // flip sign
     fnum = vadd(fnum, range);
 
-    aymo32_t fnum_lo = vunpacklo(fnum, vsetz());
-    aymo32_t fnum_hi = vunpackhi(fnum, vsetz());
-    aymo32_t block_sll_lo = vunpacklo(cg->pg_block, vsetz());
-    aymo32_t block_sll_hi = vunpackhi(cg->pg_block, vsetz());
-    aymo32_t basefreq_lo = vvsrli(vvsllv(fnum_lo, block_sll_lo), 1);
-    aymo32_t basefreq_hi = vvsrli(vvsllv(fnum_hi, block_sll_hi), 1);
-    aymo32_t pg_mult_x2_lo = vunpacklo(sg->pg_mult_x2, vsetz());
-    aymo32_t pg_mult_x2_hi = vunpackhi(sg->pg_mult_x2, vsetz());
-    aymo32_t deltafreq_lo = vvsrli(vvmullo(basefreq_lo, pg_mult_x2_lo), 1);
-    aymo32_t deltafreq_hi = vvsrli(vvmullo(basefreq_hi, pg_mult_x2_hi), 1);
+    aymoi32_t fnum_lo = vunpacklo(fnum, vsetz());
+    aymoi32_t fnum_hi = vunpackhi(fnum, vsetz());
+    aymoi32_t block_sll_lo = vunpacklo(cg->pg_block, vsetz());
+    aymoi32_t block_sll_hi = vunpackhi(cg->pg_block, vsetz());
+    aymoi32_t basefreq_lo = vvsrli(vvsllv(fnum_lo, block_sll_lo), 1);
+    aymoi32_t basefreq_hi = vvsrli(vvsllv(fnum_hi, block_sll_hi), 1);
+    aymoi32_t pg_mult_x2_lo = vunpacklo(sg->pg_mult_x2, vsetz());
+    aymoi32_t pg_mult_x2_hi = vunpackhi(sg->pg_mult_x2, vsetz());
+    aymoi32_t deltafreq_lo = vvsrli(vvmullo(basefreq_lo, pg_mult_x2_lo), 1);
+    aymoi32_t deltafreq_hi = vvsrli(vvmullo(basefreq_hi, pg_mult_x2_hi), 1);
     sg->pg_deltafreq_lo = deltafreq_lo;
     sg->pg_deltafreq_hi = deltafreq_hi;
 }
@@ -637,17 +637,17 @@ void aymo_(pg_update)(
     (void)cg;
 
     // Compute phase output
-    aymo16_t phase_out_mask = vvset1(0xFFFF);
-    aymo16_t phase_out_lo = vand(vvsrli(sg->pg_phase_lo, 9), phase_out_mask);
-    aymo16_t phase_out_hi = vand(vvsrli(sg->pg_phase_hi, 9), phase_out_mask);
-    aymo16_t phase_out = vpackus(phase_out_lo, phase_out_hi);
+    aymoi32_t phase_out_mask = vvset1(0xFFFF);
+    aymoi32_t phase_out_lo = vvand(vvsrli(sg->pg_phase_lo, 9), phase_out_mask);
+    aymoi32_t phase_out_hi = vvand(vvsrli(sg->pg_phase_hi, 9), phase_out_mask);
+    aymoi16_t phase_out = vvpackus(phase_out_lo, phase_out_hi);
     sg->pg_phase_out = phase_out;
 
     // Update phase
-    aymo32_t notreset_lo = vunpacklo(sg->pg_notreset, sg->pg_notreset);
-    aymo32_t notreset_hi = vunpackhi(sg->pg_notreset, sg->pg_notreset);
-    aymo32_t pg_phase_lo = vvand(notreset_lo, sg->pg_phase_lo);
-    aymo32_t pg_phase_hi = vvand(notreset_hi, sg->pg_phase_hi);
+    aymoi32_t notreset_lo = vunpacklo(sg->pg_notreset, sg->pg_notreset);
+    aymoi32_t notreset_hi = vunpackhi(sg->pg_notreset, sg->pg_notreset);
+    aymoi32_t pg_phase_lo = vvand(notreset_lo, sg->pg_phase_lo);
+    aymoi32_t pg_phase_hi = vvand(notreset_hi, sg->pg_phase_hi);
     sg->pg_phase_lo = vvadd(pg_phase_lo, sg->pg_deltafreq_lo);
     sg->pg_phase_hi = vvadd(pg_phase_hi, sg->pg_deltafreq_hi);
 }
@@ -675,15 +675,15 @@ void aymo_(rm_update_sg1)(struct aymo_(chip)* chip)
 
     if (chip->chip_regs.reg_BDh.ryt) {
         // Double rhythm outputs
-        aymo16_t ryt_slot_mask = vsetr(-1, -1, -1, 0, 0, 0, 0, 0);
-        aymo16_t wave_out = vand(sg->wg_out, ryt_slot_mask);
+        aymoi16_t ryt_slot_mask = vsetr(-1, -1, -1, 0, 0, 0, 0, 0);
+        aymoi16_t wave_out = vand(sg->wg_out, ryt_slot_mask);
         chip->og_acc_a = vadd(chip->og_acc_a, vand(wave_out, sg->og_out_ch_gate_a));
         chip->og_acc_b = vadd(chip->og_acc_b, vand(wave_out, sg->og_out_ch_gate_b));
         chip->og_acc_c = vadd(chip->og_acc_c, vand(wave_out, sg->og_out_ch_gate_c));
         chip->og_acc_d = vadd(chip->og_acc_d, vand(wave_out, sg->og_out_ch_gate_d));
     }
 
-    aymo16_t phase = sg->pg_phase_out;
+    aymoi16_t phase = sg->pg_phase_out;
     uint16_t phase13 = (uint16_t)vextract(phase, 1);
 
     // Update noise bits
@@ -723,8 +723,8 @@ void aymo_(rm_update_sg3)(struct aymo_(chip)* chip)
 
     if (chip->chip_regs.reg_BDh.ryt) {
         // Double rhythm outputs
-        aymo16_t ryt_slot_mask = vsetr(-1, -1, -1, 0, 0, 0, 0, 0);
-        aymo16_t wave_out = vand(sg->wg_out, ryt_slot_mask);
+        aymoi16_t ryt_slot_mask = vsetr(-1, -1, -1, 0, 0, 0, 0, 0);
+        aymoi16_t wave_out = vand(sg->wg_out, ryt_slot_mask);
         chip->og_acc_a = vadd(chip->og_acc_a, vand(wave_out, sg->og_out_ch_gate_a));
         chip->og_acc_b = vadd(chip->og_acc_b, vand(wave_out, sg->og_out_ch_gate_b));
         chip->og_acc_c = vadd(chip->og_acc_c, vand(wave_out, sg->og_out_ch_gate_c));
@@ -736,7 +736,7 @@ void aymo_(rm_update_sg3)(struct aymo_(chip)* chip)
             (chip->rm_hh_bit3 ^ chip->rm_tc_bit5) |
             (chip->rm_tc_bit3 ^ chip->rm_tc_bit5)
         );
-        aymo16_t phase = sg->pg_phase_out;
+        aymoi16_t phase = sg->pg_phase_out;
 
         // Update SD
         uint16_t noise = (uint16_t)chip->ng_noise;
@@ -813,7 +813,7 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
         if (eg_tremolopos >= 105) {
             eg_tremolopos = (210 - eg_tremolopos);
         }
-        aymo16_t eg_tremolo = vset1((int16_t)(eg_tremolopos >> chip->eg_tremoloshift));
+        aymoi16_t eg_tremolo = vset1((int16_t)(eg_tremolopos >> chip->eg_tremoloshift));
 
         for (int sgi = 0; sgi < AYMO_(SLOT_GROUP_NUM); ++sgi) {
             struct aymo_(slot_group)* sg = &chip->sg[sgi];
@@ -853,7 +853,7 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
 
     chip->tm_timer++;
     uint16_t eg_incstep = aymo_(eg_incstep_table)[chip->tm_timer & 3];
-    chip->eg_incstep = vset1((int16_t)eg_incstep);
+    chip->eg_incstep = vi2u(vset1((int16_t)eg_incstep));
 
     // Update timed envelope patterns
     int16_t eg_shift = (int16_t)ffsll((long long)chip->eg_timer);
@@ -1450,7 +1450,7 @@ void aymo_(write_20h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
         if (eg_tremolopos >= 105) {
             eg_tremolopos = (210 - eg_tremolopos);
         }
-        aymo16_t eg_tremolo = vset1((int16_t)(eg_tremolopos >> chip->eg_tremoloshift));
+        aymoi16_t eg_tremolo = vset1((int16_t)(eg_tremolopos >> chip->eg_tremoloshift));
         sg->eg_tremolo_am = vand(eg_tremolo, sg->eg_am);
     }
 

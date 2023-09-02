@@ -32,6 +32,9 @@ extern "C" {
 #endif  // __cplusplus
 
 
+#define vi2u(x)     x
+#define vu2i(x)     x
+
 #define vsetx       _mm_undefined_si128
 #define vset1       _mm_set1_epi16
 #define vseta       _mm_set_epi16
@@ -98,8 +101,6 @@ extern "C" {
 #define vunpacklo   _mm_unpacklo_epi16
 #define vunpackhi   _mm_unpackhi_epi16
 
-#define vpackus     _mm_packus_epi32
-
 
 #define vvsetx      _mm_undefined_si128
 #define vvset1      _mm_set1_epi32
@@ -120,6 +121,8 @@ extern "C" {
 #define vvsllv      _mm_sllv_epi32
 
 #define vvmullo     _mm_mullo_epi32
+
+#define vvpackus    _mm_packus_epi32
 
 
 AYMO_INLINE
@@ -185,16 +188,10 @@ AYMO_INLINE
 short mm_extractn_epi16(__m128i x, const int i)
 {
 #if defined(_MSC_VER)
-    {//if ((i >= 0) && (i < 16)) {
-        return x.m128i_i16[i];
-    }
-    //return 0;
+    return x.m128i_i16[i];
 #elif 1
-    {//if ((i >= 0) && (i < 16)) {
-        volatile int16_t* m128i_i16 = (int16_t*)&x;
-        return m128i_i16[i];
-    }
-    //return 0;
+    int16_t* x_m128i_i16 = (int16_t*)(void*)&x;
+    return x_m128i_i16[i];
 #else
     switch (i) {
     case  0: return vextract(x,  0);
@@ -215,15 +212,11 @@ AYMO_INLINE
 __m128i mm_insertn_epi16(__m128i x, short n, const int i)
 {
 #if defined(_MSC_VER)
-    {//if ((i >= 0) && (i < 16)) {
-        x.m128i_i16[i] = n;
-    }
+    x.m128i_i16[i] = n;
     return x;
 #elif 1
-    {//if ((i >= 0) && (i < 16)) {
-        volatile int16_t* m128i_i16 = (int16_t*)&x;
-        m128i_i16[i] = n;
-    }
+    int16_t* x_m128i_i16 = (int16_t*)(void*)&x;
+    x_m128i_i16[i] = n;
     return x;
 #else
     switch (i) {
@@ -243,9 +236,34 @@ __m128i mm_insertn_epi16(__m128i x, short n, const int i)
 
 // Gathers 16x 16-bit words via 16x 8-bit (low) indexes
 AYMO_INLINE
-__m128i mm_i16gather_epi16lo(int16_t const* v, __m128i i)
+__m128i mm_i16gather_epi16lo(const int16_t* v, __m128i i)
 {
     // Plain C lookup, smallest cache footprint
+#if defined(_MSC_VER)
+    __m128i r = _mm_undefined_si128();
+    r.m128i_i16[0] = v[i.m128i_u8[0x0]];
+    r.m128i_i16[1] = v[i.m128i_u8[0x2]];
+    r.m128i_i16[2] = v[i.m128i_u8[0x4]];
+    r.m128i_i16[3] = v[i.m128i_u8[0x6]];
+    r.m128i_i16[4] = v[i.m128i_u8[0x8]];
+    r.m128i_i16[5] = v[i.m128i_u8[0xA]];
+    r.m128i_i16[6] = v[i.m128i_u8[0xC]];
+    r.m128i_i16[7] = v[i.m128i_u8[0xE]];
+    return r;
+#elif 1
+    __m128i r = _mm_undefined_si128();
+    uint8_t* i_m128i_u8 = (uint8_t*)(void*)&i;
+    int16_t* r_m128i_i16 = (int16_t*)(void*)&r;
+    r_m128i_i16[0] = v[i_m128i_u8[0x0]];
+    r_m128i_i16[1] = v[i_m128i_u8[0x2]];
+    r_m128i_i16[2] = v[i_m128i_u8[0x4]];
+    r_m128i_i16[3] = v[i_m128i_u8[0x6]];
+    r_m128i_i16[4] = v[i_m128i_u8[0x8]];
+    r_m128i_i16[5] = v[i_m128i_u8[0xA]];
+    r_m128i_i16[6] = v[i_m128i_u8[0xC]];
+    r_m128i_i16[7] = v[i_m128i_u8[0xE]];
+    return r;
+#else
     i = _mm_and_si128(i, vset1(0x00FF));
     return vsetr(
         v[vextract(i, 0x0)],
@@ -257,6 +275,7 @@ __m128i mm_i16gather_epi16lo(int16_t const* v, __m128i i)
         v[vextract(i, 0x6)],
         v[vextract(i, 0x7)]
     );
+#endif
 }
 
 
@@ -303,8 +322,8 @@ AYMO_INLINE
 __m128i mm_pow2lt4_epi16(__m128i x)
 {
     __m128i a = vadd(x, vset1(1));
-    __m128i b = vsubsu(x, vset1(2));
-    __m128i c = vmululo(b, b);
+    __m128i b = vu2i(vsubsu(vi2u(x), vi2u(vset1(2))));
+    __m128i c = vmulilo(b, b);
     return vadd(a, c);
 }
 

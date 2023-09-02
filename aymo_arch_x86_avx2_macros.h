@@ -32,6 +32,9 @@ extern "C" {
 #endif  // __cplusplus
 
 
+#define vi2u(x)     x
+#define vu2i(x)     x
+
 #define vsetx       _mm256_undefined_si256
 #define vset1       _mm256_set1_epi16
 #define vseta       _mm256_set_epi16
@@ -98,8 +101,6 @@ extern "C" {
 #define vunpacklo   _mm256_unpacklo_epi16
 #define vunpackhi   _mm256_unpackhi_epi16
 
-#define vpackus     _mm256_packus_epi32
-
 
 #define vvsetx      _mm256_undefined_si256
 #define vvset1      _mm256_set1_epi32
@@ -120,6 +121,8 @@ extern "C" {
 #define vvsllv      _mm256_sllv_epi32
 
 #define vvmullo     _mm256_mullo_epi32
+
+#define vvpackus    _mm256_packus_epi32
 
 
 AYMO_INLINE
@@ -193,16 +196,10 @@ AYMO_INLINE
 short mm256_extractn_epi16(__m256i x, const int i)
 {
 #if defined(_MSC_VER)
-    {//if ((i >= 0) && (i < 16)) {
-        return x.m256i_i16[i];
-    }
-    //return 0;
+    return x.m256i_i16[i];
 #elif 1
-    {//if ((i >= 0) && (i < 16)) {
-        volatile int16_t* m256i_i16 = (int16_t*)&x;
-        return m256i_i16[i];
-    }
-    //return 0;
+    int16_t* x_m256i_i16 = (int16_t*)&x;
+    return x_m256i_i16[i];
 #else
     switch (i) {
     case  0: return vextract(x,  0);
@@ -231,15 +228,11 @@ AYMO_INLINE
 __m256i mm256_insertn_epi16(__m256i x, short n, const int i)
 {
 #if defined(_MSC_VER)
-    {//if ((i >= 0) && (i < 16)) {
-        x.m256i_i16[i] = n;
-    }
+    x.m256i_i16[i] = n;
     return x;
 #elif 1
-    {//if ((i >= 0) && (i < 16)) {
-        volatile int16_t* m256i_i16 = (int16_t*)&x;
-        m256i_i16[i] = n;
-    }
+    int16_t* x_m256i_i16 = (int16_t*)(void*)&x;
+    x_m256i_i16[i] = n;
     return x;
 #else
     switch (i) {
@@ -267,7 +260,7 @@ __m256i mm256_insertn_epi16(__m256i x, short n, const int i)
 
 // Gathers 16x 16-bit words via 16x 8-bit (low) indexes
 AYMO_INLINE
-__m256i mm256_i16gather_epi16lo(int16_t const* v, __m256i i)
+__m256i mm256_i16gather_epi16lo(const int16_t* v, __m256i i)
 {
 #if (CONFIG_AYMO_YMF262_X86_AVX2_GATHER16_STRATEGY == 2)
     // 2x 32-bit gatherings, 16-bit words, smallest cache footprint
@@ -280,12 +273,11 @@ __m256i mm256_i16gather_epi16lo(int16_t const* v, __m256i i)
         -1, -1, -1, 14, -1, -1, -1, 10, -1, -1, -1, 6, -1, -1, -1, 2
     );
     __m256i jh = _mm256_shuffle_epi8(i, sh);
-    __m256i rh = _mm256_i32gather_epi32((const int32_t*)v, jh, 2);
+    __m256i rh = _mm256_i32gather_epi32((const int32_t*)(const void*)v, jh, 2);
     rh = _mm256_slli_epi32(rh, 16);
     __m256i jl = _mm256_shuffle_epi8(i, sl);
-    __m256i rl = _mm256_i32gather_epi32((const int32_t*)v, jl, 2);
-    __m256i r = _mm256_blend_epi16(rl, rh, 0xAA);
-    return r;
+    __m256i rl = _mm256_i32gather_epi32((const int32_t*)(const void*)v, jl, 2);
+    return _mm256_blend_epi16(rl, rh, 0xAA);
 
 #elif (CONFIG_AYMO_X86_AVX2_GATHER16_STRATEGY == 1)
     // 1x 32-bit gathering, joint 16-bit words, squared cache footprint
@@ -294,7 +286,7 @@ __m256i mm256_i16gather_epi16lo(int16_t const* v, __m256i i)
         -1, -1, 14, 12, -1, -1, 10, 8, -1, -1, 6, 4, -1, -1, 2, 0
     );
     __m256i j = _mm256_shuffle_epi8(i, s);
-    return _mm256_i32gather_epi32((const int32_t*)v, j, 4);
+    return _mm256_i32gather_epi32((const int32_t*)(const void *)v, j, 4);
 
 #else  // CONFIG_AYMO_X86_AVX2_GATHER16_STRATEGY
     // Plain C lookup, smallest cache footprint
@@ -373,7 +365,7 @@ AYMO_INLINE
 __m256i mm256_pow2lt4_epi16(__m256i x)
 {
     __m256i a = vadd(x, vset1(1));
-    __m256i b = vsubsu(x, vset1(2));
+    __m256i b = vu2i(vsubsu(vi2u(x), vi2u(vset1(2))));
     __m256i c = vmululo(b, b);
     return vadd(a, c);
 }
