@@ -45,6 +45,15 @@
     <ClInclude Include="aymo_cc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="aymo_arch_armv7_neon_macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aymo_arch_armv7_neon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="aymo_ymf262_armv7_neon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -63,6 +72,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="aymo_ymf262_x86_sse41.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="aymo_ymf262_armv7_neon.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -18,12 +18,16 @@ You should have received a copy of the GNU Lesser General Public License
 along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#if 0
+#include "aymo_cc.h"
+#if defined(AYMO_ARCH_IS_X86_SE41)
     #include "aymo_ymf262_x86_sse41.h"
     #include "aymo_arch_x86_sse41_macros.h"
-#else
+#elif defined(AYMO_ARCH_IS_X86_AVX2)
     #include "aymo_ymf262_x86_avx2.h"
     #include "aymo_arch_x86_avx2_macros.h"
+#elif defined(AYMO_ARCH_IS_ARMV7_NEON)
+    #include "aymo_ymf262_armv7_neon.h"
+    #include "aymo_arch_armv7_neon_macros.h"
 #endif
 
 #include "imf.h"
@@ -102,7 +106,11 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
 
     // TODO: Commented stuff
     assert(vextractn(sg->wg_out, sgo) == slot->out);
+#if defined(AYMO_ARCH_IS_ARMV7_NEON)
+    assert(vextractn(sg->wg_fb_shr, sgo) == (slot->channel->fb ? (9 - slot->channel->fb) : 0));
+#else
     assert(vextractn(sg->wg_fb_mulhi, sgo) == (slot->channel->fb ? (0x40 << slot->channel->fb) : 0));
+#endif
     assert(vextractn(sg->wg_fbmod, sgo) == slot->fbmod);
     assert(vextractn(sg->wg_mod, sgo) == *slot->mod);
     assert(vextractn(sg->wg_prout, sgo) == slot->prout);
@@ -127,10 +135,12 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     assert((uint16_t)-vextractn(sg->pg_notreset, sgo) == !slot->pg_reset);
     const int sgo_side[16] = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1 };
     const int sgo_cell[16] = { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7 };
-#ifdef include_aymo_arch_x86_sse41_h_
+#if defined(AYMO_ARCH_IS_X86_SSE41)
     uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m128i_u32 : sg->pg_phase_lo.m128i_u32)[sgo_cell[sgo]];
-#else
+#elif defined(AYMO_ARCH_IS_X86_AVX2)
     uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m256i_u32 : sg->pg_phase_lo.m256i_u32)[sgo_cell[sgo]];
+#elif defined(AYMO_ARCH_IS_ARMV7_NEON)
+    uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.n128_u32 : sg->pg_phase_lo.n128_u32)[sgo_cell[sgo]];
 #endif
     assert(pg_phase == slot->pg_phase);
     assert((uint16_t)vextractn(sg->pg_phase_out, sgo) == slot->pg_phase_out);
@@ -470,14 +480,18 @@ void file_benchmark(void)
 
 void test_vhsum(void)
 {
-#ifdef include_aymo_arch_x86_sse41_h_
+#if defined(AYMO_ARCH_IS_X86_SSE41)
     aymoi16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128);
     volatile int b = vhsum(a);
     assert(b == 255);
-#else
+#elif defined(AYMO_ARCH_IS_X86_AVX2)
     aymoi16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, -32768);
     volatile int b = vhsum(a);
     assert(b == -1);
+#elif defined(AYMO_ARCH_IS_ARMV7_NEON)
+    aymoi16_t a = vsetr(1, 2, 4, 8, 16, 32, 64, 128);
+    volatile int b = vhsum(a);
+    assert(b == 255);
 #endif
 }
 
