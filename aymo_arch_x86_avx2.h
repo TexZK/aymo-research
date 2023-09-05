@@ -22,6 +22,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #define include_aymo_arch_x86_avx2_h_
 
 #include "aymo_cc.h"
+#ifdef AYMO_ARCH_IS_X86_AVX2
 
 #include <immintrin.h>
 
@@ -42,4 +43,5 @@ typedef __m256i aymou32_t;
 }  // extern "C"
 #endif  // __cplusplus
 
+#endif  // AYMO_ARCH_IS_X86_AVX2
 #endif  // include_aymo_arch_x86_avx2_h_

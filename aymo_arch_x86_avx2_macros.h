@@ -22,6 +22,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #define include_aymo_arch_x86_avx2_macros_h_
 
 #include "aymo_arch_x86_avx2.h"
+#ifdef AYMO_ARCH_IS_X86_AVX2
 
 #include <intrin.h>
 #include <stdint.h>
@@ -63,7 +64,7 @@ extern "C" {
 #define vsub        _mm256_sub_epi16
 #define vsubsi      _mm256_subs_epi16
 #define vsubsu      _mm256_subs_epu16
-#define vneg(x)     (vsub(vsetz(), x))
+#define vneg(x)     (vsub(vsetz(), (x)))
 
 #define vslli       _mm256_slli_epi16
 #define vsrli       _mm256_srli_epi16
@@ -102,6 +103,9 @@ extern "C" {
 #define vunpackhi   _mm256_unpackhi_epi16
 
 
+#define vvi2u(x)    x
+#define vvu2i(x)    x
+
 #define vvsetx      _mm256_undefined_si256
 #define vvset1      _mm256_set1_epi32
 #define vvseta      _mm256_set_epi32
@@ -128,7 +132,7 @@ extern "C" {
 AYMO_INLINE
 __m256i mm256_setm_epi16(uint16_t m)
 {
-    __m256i x = vsetr(
+    return vsetr(
         (((m >>  0) & 1) ? -1 : 0),
         (((m >>  1) & 1) ? -1 : 0),
         (((m >>  2) & 1) ? -1 : 0),
@@ -146,7 +150,6 @@ __m256i mm256_setm_epi16(uint16_t m)
         (((m >> 14) & 1) ? -1 : 0),
         (((m >> 15) & 1) ? -1 : 0)
     );
-    return x;
 }
 
 
@@ -401,4 +404,5 @@ int ffsll(long long x)
 }  // extern "C"
 #endif  // __cplusplus
 
+#endif  // AYMO_ARCH_IS_X86_AVX2
 #endif  // include_aymo_arch_x86_avx2_macros_h_

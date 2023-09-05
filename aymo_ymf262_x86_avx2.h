@@ -22,6 +22,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #define include_aymo_ymf262_x86_avx2_h_
 
 #include "aymo_arch_x86_avx2.h"
+#ifdef AYMO_ARCH_IS_X86_AVX2
 
 #include <stdint.h>
 
@@ -409,4 +410,5 @@ void aymo_(init)(struct aymo_(chip)* chip);
 }  // extern "C"
 #endif  // __cplusplus
 
+#endif  // AYMO_ARCH_IS_X86_AVX2
 #endif  // include_aymo_ymf262_x86_avx2_h_

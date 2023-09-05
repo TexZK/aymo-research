@@ -22,6 +22,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #define include_aymo_arch_x86_sse41_h_
 
 #include "aymo_cc.h"
+#ifdef AYMO_ARCH_IS_X86_SSE41
 
 #include <smmintrin.h>
 
@@ -42,4 +43,5 @@ typedef __m128i aymou32_t;
 }  // extern "C"
 #endif  // __cplusplus
 
+#endif  // AYMO_ARCH_IS_X86_SSE41
 #endif  // include_aymo_arch_x86_sse41_h_

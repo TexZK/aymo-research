@@ -22,6 +22,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #define include_aymo_arch_x86_sse41_macros_h_
 
 #include "aymo_arch_x86_sse41.h"
+#ifdef AYMO_ARCH_IS_X86_SSE41
 
 #include <intrin.h>
 #include <stdint.h>
@@ -63,7 +64,7 @@ extern "C" {
 #define vsub        _mm_sub_epi16
 #define vsubsi      _mm_subs_epi16
 #define vsubsu      _mm_subs_epu16
-#define vneg(x)     (vsub(vsetz(), x))
+#define vneg(x)     (vsub(vsetz(), (x)))
 
 #define vslli       _mm_slli_epi16
 #define vsrli       _mm_srli_epi16
@@ -102,6 +103,9 @@ extern "C" {
 #define vunpackhi   _mm_unpackhi_epi16
 
 
+#define vvi2u(x)    x
+#define vvu2i(x)    x
+
 #define vvsetx      _mm_undefined_si128
 #define vvset1      _mm_set1_epi32
 #define vvseta      _mm_set_epi32
@@ -128,17 +132,16 @@ extern "C" {
 AYMO_INLINE
 __m128i mm_setm_epi16(uint8_t m)
 {
-    __m128i x = vsetr(
-        (((m >>  0) & 1) ? -1 : 0),
-        (((m >>  1) & 1) ? -1 : 0),
-        (((m >>  2) & 1) ? -1 : 0),
-        (((m >>  3) & 1) ? -1 : 0),
-        (((m >>  4) & 1) ? -1 : 0),
-        (((m >>  5) & 1) ? -1 : 0),
-        (((m >>  6) & 1) ? -1 : 0),
-        (((m >>  7) & 1) ? -1 : 0)
+    return vsetr(
+        (((m >> 0) & 1) ? -1 : 0),
+        (((m >> 1) & 1) ? -1 : 0),
+        (((m >> 2) & 1) ? -1 : 0),
+        (((m >> 3) & 1) ? -1 : 0),
+        (((m >> 4) & 1) ? -1 : 0),
+        (((m >> 5) & 1) ? -1 : 0),
+        (((m >> 6) & 1) ? -1 : 0),
+        (((m >> 7) & 1) ? -1 : 0)
     );
-    return x;
 }
 
 
@@ -358,4 +361,5 @@ int ffsll(long long x)
 }  // extern "C"
 #endif  // __cplusplus
 
+#endif  // AYMO_ARCH_IS_X86_SSE41
 #endif  // include_aymo_arch_x86_sse41_macros_h_

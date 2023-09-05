@@ -36,6 +36,7 @@ Thanks:
 
 #include "aymo_ymf262_x86_sse41.h"
 #include "aymo_arch_x86_sse41_macros.h"
+#ifdef AYMO_ARCH_IS_X86_SSE41
 
 
 // Exponential look-up table
@@ -524,7 +525,7 @@ void aymo_(eg_update)(
     sg->pg_notreset = notreset;
     aymoi16_t eg_gen_mullo = vblendv(vset1(AYMO_(EG_GEN_MULLO_ATTACK)), sg->eg_gen_mullo, notreset);
     aymoi16_t reg_rate = vu2i(vmululo(vi2u(sg->eg_adsr), vi2u(eg_gen_mullo)));  // move to top nibble
-    aymoi16_t rate_temp = vand(reg_rate, vset1(0xF000));  // keep top nibble
+    aymoi16_t rate_temp = vand(reg_rate, vset1((int16_t)0xF000));  // keep top nibble
     rate_temp = vsrli(rate_temp, AYMO_(EG_GEN_SRLHI));
     aymoi16_t rate = vadd(sg->eg_ks, rate_temp);
     aymoi16_t rate_lo = vand(rate, vset1(3));
@@ -562,7 +563,7 @@ void aymo_(eg_update)(
 
     // Move attack to decay state
     aymoi16_t eg_inc_atk_cond = vand(vand(vcmpp(sg->eg_key), vcmpp(shift)),
-                                    vand(vcmpz(sg->eg_gen), vcmpgt(vset1(15), rate_hi)));
+                                     vand(vcmpz(sg->eg_gen), vcmpgt(vset1(15), rate_hi)));
     aymoi16_t eg_inc_atk_ninc = vsrlv(sg->eg_rout, vsub(vset1(4), shift));
     aymoi16_t eg_inc = vandnot(eg_inc_atk_ninc, eg_inc_atk_cond);
     aymoi16_t eg_gen_atk_to_dec = vcmpz(vor(sg->eg_gen, sg->eg_rout));
@@ -1867,3 +1868,6 @@ void aymo_(init)(struct aymo_(chip)* chip)
     chip->eg_tremoloshift = 4;
     chip->eg_vibshift = 1;
 }
+
+
+#endif  // AYMO_ARCH_IS_X86_SSE41
