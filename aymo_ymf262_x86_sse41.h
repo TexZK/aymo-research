@@ -54,7 +54,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 
 // Wave descriptor for single slot
 struct aymo_(wave) {
-    uint16_t wg_phase_mullo;
+    int16_t wg_phase_mullo;
     int16_t wg_phase_zero;
     int16_t wg_phase_neg;
     int16_t wg_phase_flip;
@@ -303,7 +303,7 @@ struct aymo_(slot_group) {
 #endif  // AYMO_dEBUG
 };
 
-// Channel_2xOP SIMD group status  // TODO
+// Channel_2xOP SIMD group status
 // Processing order (kinda)
 AYMO_ALIGN_V16
 struct aymo_(ch2x_group) {

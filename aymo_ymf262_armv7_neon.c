@@ -609,7 +609,7 @@ void aymo_(pg_update_deltafreq)(
     aymoi16_t fnum = cg->pg_fnum;
     aymoi16_t range = vand(fnum, vset1(7 << 7));
     range = vand(sg->pg_vib, vsllv(range, chip->pg_vib_shs));
-    range = vmul(range, chip->pg_vib_sign);
+    range = vmullo(range, chip->pg_vib_sign);
     fnum = vadd(fnum, range);
 
     aymoi32_t fnum_lo = vunpacklo(fnum);
@@ -620,8 +620,8 @@ void aymo_(pg_update_deltafreq)(
     aymoi32_t basefreq_hi = vvsrli(vvsllv(fnum_hi, block_sll_hi), 1);
     aymoi32_t pg_mult_x2_lo = vunpacklo(sg->pg_mult_x2);
     aymoi32_t pg_mult_x2_hi = vunpackhi(sg->pg_mult_x2);
-    aymoi32_t deltafreq_lo = vvsrli(vvmul(basefreq_lo, pg_mult_x2_lo), 1);
-    aymoi32_t deltafreq_hi = vvsrli(vvmul(basefreq_hi, pg_mult_x2_hi), 1);
+    aymoi32_t deltafreq_lo = vvsrli(vvmullo(basefreq_lo, pg_mult_x2_lo), 1);
+    aymoi32_t deltafreq_hi = vvsrli(vvmullo(basefreq_hi, pg_mult_x2_hi), 1);
     sg->pg_deltafreq_lo = deltafreq_lo;
     sg->pg_deltafreq_hi = deltafreq_hi;
 }
@@ -829,7 +829,7 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
         int16_t pg_vib_sign = +1;
 
         if (!(vibpos & 3)) {
-            pg_vib_shs = +16;  // nullify
+            pg_vib_shs = +16;
         }
         else if (vibpos & 1) {
             pg_vib_shs -= 1;
@@ -1674,7 +1674,7 @@ void aymo_(write_C0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     }
 
     if (reg_C0h->fb != reg_C0h_prev.fb) {
-        int16_t fb_shs = (reg_C0h->fb ? -(int16_t)(9 - reg_C0h->fb) : 16);
+        int16_t fb_shs = (reg_C0h->fb ? -(int16_t)(9 - reg_C0h->fb) : +16);
         sg0->wg_fb_shs = vinsertn(sg0->wg_fb_shs, fb_shs, sgo);
         sg1->wg_fb_shs = vinsertn(sg1->wg_fb_shs, fb_shs, sgo);
     }

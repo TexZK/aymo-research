@@ -76,13 +76,13 @@ extern "C" {
 #define vsrlv(a,b)      (vu2i(vshlq_u16(vi2u(a), vnegq_s16(b))))
 #define vsrav(a,b)      (vshlq_s16((a), vnegq_s16(b)))
 
+#define vmullo          vmulq_s16
+
 #define vmini           vminq_s16
 #define vminu           vminq_u16
 
 #define vmaxi           vmaxq_s16
 #define vmaxu           vmaxq_u16
-
-#define vmul            vmulq_s16
 
 #define vextract        vgetq_lane_s16
 #define vextractn       vextractn_s16
@@ -106,7 +106,7 @@ extern "C" {
 #define vunpackhi(x)    (vunpack(vgethi(x)))
 
 
-#define wmul            vmull_s16
+#define wmullo          vmull_s16
 
 #define wcombine        vcombine_s16
 
@@ -130,7 +130,7 @@ extern "C" {
 
 #define vvsllv          vshlq_s32
 
-#define vvmul           vmulq_s32
+#define vvmullo         vmulq_s32
 
 #define vvextract       vgetq_lane_s32
 #define vvextractn      vvextractn_s32
@@ -239,14 +239,14 @@ short vextractn_s16(int16x8_t x, const int i)
     return x_n128i_i16[i];
 #else
     switch (i) {
-    case  0: return vextract(x, 0);
-    case  1: return vextract(x, 1);
-    case  2: return vextract(x, 2);
-    case  3: return vextract(x, 3);
-    case  4: return vextract(x, 4);
-    case  5: return vextract(x, 5);
-    case  6: return vextract(x, 6);
-    case  7: return vextract(x, 7);
+    case 0: return vextract(x, 0);
+    case 1: return vextract(x, 1);
+    case 2: return vextract(x, 2);
+    case 3: return vextract(x, 3);
+    case 4: return vextract(x, 4);
+    case 5: return vextract(x, 5);
+    case 6: return vextract(x, 6);
+    case 7: return vextract(x, 7);
     default: return 0;
     }
 #endif
@@ -265,20 +265,21 @@ int16x8_t vinsertn_s16(int16x8_t x, short n, const int i)
     return x;
 #else
     switch (i) {
-    case  0: return vinsert(x, n, 0);
-    case  1: return vinsert(x, n, 1);
-    case  2: return vinsert(x, n, 2);
-    case  3: return vinsert(x, n, 3);
-    case  4: return vinsert(x, n, 4);
-    case  5: return vinsert(x, n, 5);
-    case  6: return vinsert(x, n, 6);
-    case  7: return vinsert(x, n, 7);
+    case 0: return vinsert(x, n, 0);
+    case 1: return vinsert(x, n, 1);
+    case 2: return vinsert(x, n, 2);
+    case 3: return vinsert(x, n, 3);
+    case 4: return vinsert(x, n, 4);
+    case 5: return vinsert(x, n, 5);
+    case 6: return vinsert(x, n, 6);
+    case 7: return vinsert(x, n, 7);
     default: return x;
     }
 #endif
 }
 
 
+// Gathers 16x 16-bit words via 16x 8-bit (low) indexes
 AYMO_INLINE
 int16x8_t vgather_s16(const int16_t* v, int16x8_t i)
 {
@@ -347,10 +348,10 @@ long vvextractn_s32(int32x4_t x, const int i)
     return x_n128i_i32[i];
 #else
     switch (i) {
-    case  0: return vvextract(x, 0);
-    case  1: return vvextract(x, 1);
-    case  2: return vvextract(x, 2);
-    case  3: return vvextract(x, 3);
+    case 0: return vvextract(x, 0);
+    case 1: return vvextract(x, 1);
+    case 2: return vvextract(x, 2);
+    case 3: return vvextract(x, 3);
     default: return 0;
     }
 #endif
@@ -369,10 +370,10 @@ int32x4_t vvinsertn_s32(int32x4_t x, long n, const int i)
     return x;
 #else
     switch (i) {
-    case  0: return vvinsert(x, n, 0);
-    case  1: return vvinsert(x, n, 1);
-    case  2: return vvinsert(x, n, 2);
-    case  3: return vvinsert(x, n, 3);
+    case 0: return vvinsert(x, n, 0);
+    case 1: return vvinsert(x, n, 1);
+    case 2: return vvinsert(x, n, 2);
+    case 3: return vvinsert(x, n, 3);
     default: return x;
     }
 #endif
@@ -398,15 +399,20 @@ int16_t clamp16(int x)
 AYMO_INLINE
 int ffsll(long long x)
 {
-    unsigned long long u = (unsigned long long)x;
-    unsigned lo = (unsigned)u;
-    unsigned lon = _arm_clz(lo);
-    if (lon < 32) {
-        return lon;
+    unsigned long i = 0;
+#if defined(_WIN32)
+    if (_BitScanForward(&i, (uint32_t)x)) {
+        return (int)(i + 1);
     }
-    unsigned hi = (unsigned)(u >> 32);
-    unsigned hin = _arm_clz(hi);
-    return (int)(hin + 32);
+    if (_BitScanForward(&i, (uint32_t)(x >> 32))) {
+        return (int)(i + 33);
+    }
+#else
+    if (_BitScanForward64(&i, (unsigned long long)x)) {
+        return (int)(i + 1);
+    }
+#endif
+    return 0;
 }
 #endif  // _MSC_VER
 

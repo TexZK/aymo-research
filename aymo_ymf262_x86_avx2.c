@@ -466,7 +466,7 @@ void aymo_(wg_update)(
     // Compute exponential output
     aymoi16_t exp_in = vblendv(phase_out, logsin_val, sg->wg_sine_gate);
     aymoi16_t exp_level = vadd(exp_in, vslli(sg->eg_out, 3));
-    exp_level = vu2i(vminu(vi2u(exp_level), vi2u(vset1(0x1FFF))));
+    exp_level = vmini(exp_level, vset1(0x1FFF));
     aymoi16_t exp_level_lo = exp_level;  // vgather() masks to low byte
     aymoi16_t exp_level_hi = vsrli(exp_level, 8);
     aymoi16_t exp_value = vgather(aymo_(exp_x2_table), exp_level_lo);
@@ -522,7 +522,7 @@ void aymo_(eg_update)(
     aymoi16_t rate = vadd(sg->eg_ks, rate_temp);
     aymoi16_t rate_lo = vand(rate, vset1(3));
     aymoi16_t rate_hi = vsrli(rate, 2);
-    rate_hi = vminu(rate_hi, vset1(15));
+    rate_hi = vmini(rate_hi, vset1(15));
 
     // Compute shift
     aymoi16_t eg_shift = vadd(rate_hi, chip->eg_add);
@@ -533,7 +533,7 @@ void aymo_(eg_update)(
     aymou16_t rate_lo_muluhi = vi2u(vslli(vpow2m1lt4(rate_lo), 1));
     aymoi16_t incstep_ge12 = vand(vu2i(vmuluhi(chip->eg_incstep, rate_lo_muluhi)), vset1(1));
     aymoi16_t shift_ge12 = vadd(vand(rate_hi, vset1(3)), incstep_ge12);
-    shift_ge12 = vminu(shift_ge12, vset1(3));
+    shift_ge12 = vmini(shift_ge12, vset1(3));
     shift_ge12 = vblendv(shift_ge12, chip->eg_statev, vcmpz(shift_ge12));
 
     aymoi16_t shift = vblendv(shift_lt12, shift_ge12, vcmpgt(rate_hi, vset1(11)));
@@ -1621,7 +1621,7 @@ void aymo_(write_C0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     int sgi1 = (ch2x_word1 / AYMO_(SLOT_GROUP_LENGTH));
     struct aymo_(slot_group)* sg0 = &chip->sg[sgi0];
     struct aymo_(slot_group)* sg1 = &chip->sg[sgi1];
-    int cgi = (sgi0 / 2);
+    int cgi = aymo_(sgi_to_cgi)(sgi0);
     struct aymo_(ch2x_group)* cg = &chip->cg[cgi];
 
     if (reg_C0h->cha != reg_C0h_prev.cha) {

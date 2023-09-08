@@ -26,6 +26,9 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 
 #include <intrin.h>
 #include <stdint.h>
+#if !defined(_MSC_VER)
+    #include <string.h>  // ffsll()
+#endif
 
 
 #ifdef __cplusplus
@@ -33,100 +36,106 @@ extern "C" {
 #endif  // __cplusplus
 
 
-#define vi2u(x)     x
-#define vu2i(x)     x
-
-#define vsetx       _mm_undefined_si128
-#define vset1       _mm_set1_epi16
-#define vseta       _mm_set_epi16
-#define vsetr       _mm_setr_epi16
-#define vsetz       _mm_setzero_si128
-#define vsetf()     (vset1(-1))
-#define vsetm        mm_setm_epi16
-
-#define vnot(x)     (vxor((x), vsetf()))
-#define vand        _mm_and_si128
-#define vor         _mm_or_si128
-#define vxor        _mm_xor_si128
-#define vandnot     _mm_andnot_si128  // ~A & B
-#define vblendi     _mm_blend_epi16
-#define vblendv     _mm_blendv_epi8
-
-#define vcmpeq      _mm_cmpeq_epi16
-#define vcmpgt      _mm_cmpgt_epi16
-#define vcmpz(x)    (vcmpeq((x), vsetz()))
-#define vcmpp(x)    (vcmpgt((x), vsetz()))
-
-#define vadd        _mm_add_epi16
-#define vaddsi      _mm_adds_epi16
-#define vaddsu      _mm_adds_epu16
-
-#define vsub        _mm_sub_epi16
-#define vsubsi      _mm_subs_epi16
-#define vsubsu      _mm_subs_epu16
-#define vneg(x)     (vsub(vsetz(), (x)))
-
-#define vslli       _mm_slli_epi16
-#define vsrli       _mm_srli_epi16
-#define vsrai       _mm_srai_epi16
-#define vsllv        mm_sllv_epi16
-#define vsrlv        mm_srlv_epi16
-#define vsrav        mm_srav_epi16
-
-#define vmulihi     _mm_mulhi_epi16
-#define vmuluhi     _mm_mulhi_epu16
-
-#define vmulilo     _mm_mullo_epi16
-#define vmululo     _mm_mullo_epi16
-
-#define vmini       _mm_min_epi16
-#define vminu       _mm_min_epu16
-
-#define vmaxi       _mm_max_epi16
-#define vmaxu       _mm_max_epu16
-
-#define vextract    _mm_extract_epi16
-#define vextractn    mm_extractn_epi16
-
-#define vinsert     _mm_insert_epi16
-#define vinsertn     mm_insertn_epi16
-
-#define vgather      mm_i16gather_epi16lo
-
-#define vhsum        mm_hsum_epi16
-#define vhsums       mm_hsums_epi16
-
-#define vpow2m1lt4   mm_pow2m1lt4_epi16
-#define vpow2lt4     mm_pow2lt4_epi16
-
-#define vunpacklo   _mm_unpacklo_epi16
-#define vunpackhi   _mm_unpackhi_epi16
-
-
-#define vvi2u(x)    x
-#define vvu2i(x)    x
-
-#define vvsetx      _mm_undefined_si128
-#define vvset1      _mm_set1_epi32
-#define vvseta      _mm_set_epi32
-#define vvsetr      _mm_setr_epi32
-#define vvsetz      _mm_setzero_si128
-#define vvsetf()    (vvset1(-1))
-
-#define vvand       vand
-#define vvor        vor
-#define vvxor       vxor
-#define vvandnot    vandnot
-
-#define vvadd       _mm_add_epi32
-
-#define vvsrli      _mm_srli_epi32
-
-#define vvsllv      _mm_sllv_epi32
-
-#define vvmullo     _mm_mullo_epi32
-
-#define vvpackus    _mm_packus_epi32
+#define vi2u(x)         x
+#define vu2i(x)         x
+                        
+#define vsetx           _mm_undefined_si128
+#define vset1           _mm_set1_epi16
+#define vseta           _mm_set_epi16
+#define vsetr           _mm_setr_epi16
+#define vsetz           _mm_setzero_si128
+#define vsetf()         (vset1(-1))
+#define vsetm            mm_setm_epi16
+                        
+#define vnot(x)         (vxor((x), vsetf()))
+#define vand            _mm_and_si128
+#define vor             _mm_or_si128
+#define vxor            _mm_xor_si128
+#define vandnot         _mm_andnot_si128  // ~A & B
+#define vblendi         _mm_blend_epi16
+#define vblendv         _mm_blendv_epi8
+                        
+#define vcmpeq          _mm_cmpeq_epi16
+#define vcmpgt          _mm_cmpgt_epi16
+#define vcmpz(x)        (vcmpeq((x), vsetz()))
+#define vcmpp(x)        (vcmpgt((x), vsetz()))
+                        
+#define vadd            _mm_add_epi16
+#define vaddsi          _mm_adds_epi16
+#define vaddsu          _mm_adds_epu16
+                        
+#define vsub            _mm_sub_epi16
+#define vsubsi          _mm_subs_epi16
+#define vsubsu          _mm_subs_epu16
+#define vneg(x)         (vsub(vsetz(), (x)))
+                        
+#define vslli           _mm_slli_epi16
+#define vsrli           _mm_srli_epi16
+#define vsrai           _mm_srai_epi16
+#define vsllv            mm_sllv_epi16
+#define vsrlv            mm_srlv_epi16
+#define vsrav            mm_srav_epi16
+                        
+#define vmulihi         _mm_mulhi_epi16
+#define vmuluhi         _mm_mulhi_epu16
+                        
+#define vmulilo         _mm_mullo_epi16
+#define vmululo         _mm_mullo_epi16
+                        
+#define vmini           _mm_min_epi16
+#define vminu           _mm_min_epu16
+                        
+#define vmaxi           _mm_max_epi16
+#define vmaxu           _mm_max_epu16
+                        
+#define vextract        _mm_extract_epi16
+#define vextractn        mm_extractn_epi16
+                        
+#define vinsert         _mm_insert_epi16
+#define vinsertn         mm_insertn_epi16
+                        
+#define vgather          mm_i16gather_epi16lo
+                        
+#define vhsum            mm_hsum_epi16
+#define vhsums           mm_hsums_epi16
+                        
+#define vpow2m1lt4       mm_pow2m1lt4_epi16
+#define vpow2lt4         mm_pow2lt4_epi16
+                        
+#define vunpacklo       _mm_unpacklo_epi16
+#define vunpackhi       _mm_unpackhi_epi16
+                        
+                        
+#define vvi2u(x)        x
+#define vvu2i(x)        x
+                        
+#define vvsetx          _mm_undefined_si128
+#define vvset1          _mm_set1_epi32
+#define vvseta          _mm_set_epi32
+#define vvsetr          _mm_setr_epi32
+#define vvsetz          _mm_setzero_si128
+#define vvsetf()        (vvset1(-1))
+                        
+#define vvand           vand
+#define vvor            vor
+#define vvxor           vxor
+#define vvandnot        vandnot
+                        
+#define vvadd           _mm_add_epi32
+                        
+#define vvsrli          _mm_srli_epi32
+                        
+#define vvsllv          _mm_sllv_epi32
+                        
+#define vvextract       _mm_extract_epi32
+#define vvextractn       mm_extractn_epi32
+                        
+#define vvinsert        _mm_insert_epi32
+#define vvinsertn        mm_insertn_epi32
+                        
+#define vvmullo         _mm_mullo_epi32
+                        
+#define vvpackus        _mm_packus_epi32
 
 
 AYMO_INLINE
@@ -197,14 +206,14 @@ short mm_extractn_epi16(__m128i x, const int i)
     return x_m128i_i16[i];
 #else
     switch (i) {
-    case  0: return vextract(x,  0);
-    case  1: return vextract(x,  1);
-    case  2: return vextract(x,  2);
-    case  3: return vextract(x,  3);
-    case  4: return vextract(x,  4);
-    case  5: return vextract(x,  5);
-    case  6: return vextract(x,  6);
-    case  7: return vextract(x,  7);
+    case 0: return vextract(x, 0);
+    case 1: return vextract(x, 1);
+    case 2: return vextract(x, 2);
+    case 3: return vextract(x, 3);
+    case 4: return vextract(x, 4);
+    case 5: return vextract(x, 5);
+    case 6: return vextract(x, 6);
+    case 7: return vextract(x, 7);
     default: return 0;
     }
 #endif
@@ -223,14 +232,14 @@ __m128i mm_insertn_epi16(__m128i x, short n, const int i)
     return x;
 #else
     switch (i) {
-    case  0: return vinsert(x, n, 0);
-    case  1: return vinsert(x, n, 1);
-    case  2: return vinsert(x, n, 2);
-    case  3: return vinsert(x, n, 3);
-    case  4: return vinsert(x, n, 4);
-    case  5: return vinsert(x, n, 5);
-    case  6: return vinsert(x, n, 6);
-    case  7: return vinsert(x, n, 7);
+    case 0: return vinsert(x, n, 0);
+    case 1: return vinsert(x, n, 1);
+    case 2: return vinsert(x, n, 2);
+    case 3: return vinsert(x, n, 3);
+    case 4: return vinsert(x, n, 4);
+    case 5: return vinsert(x, n, 5);
+    case 6: return vinsert(x, n, 6);
+    case 7: return vinsert(x, n, 7);
     default: return x;
     }
 #endif
@@ -332,6 +341,48 @@ __m128i mm_pow2lt4_epi16(__m128i x)
 
 
 AYMO_INLINE
+long mm_extractn_epi32(__m128i x, const int i)
+{
+#if defined(_MSC_VER)
+    return x.m128i_i32[i];
+#elif 1
+    int32_t* x_m128i_i32 = (int32_t*)(void*)&x;
+    return x_m128i_i32[i];
+#else
+    switch (i) {
+    case 0: return vvextract(x, 0);
+    case 1: return vvextract(x, 1);
+    case 2: return vvextract(x, 2);
+    case 3: return vvextract(x, 3);
+    default: return 0;
+    }
+#endif
+}
+
+
+AYMO_INLINE
+__m128i mm_insertn_epi32(__m128i x, long n, const int i)
+{
+#if defined(_MSC_VER)
+    x.m128i_i32[i] = n;
+    return x;
+#elif 1
+    int32_t* x_m128i_i32 = (int32_t*)(void*)&x;
+    x_m128i_i32[i] = n;
+    return x;
+#else
+    switch (i) {
+    case 0: return vvinsert(x, n, 0);
+    case 1: return vvinsert(x, n, 1);
+    case 2: return vvinsert(x, n, 2);
+    case 3: return vvinsert(x, n, 3);
+    default: return x;
+    }
+#endif
+}
+
+
+AYMO_INLINE
 int16_t clamp16(int x)
 {
     if (x < INT16_MIN) {
@@ -344,17 +395,28 @@ int16_t clamp16(int x)
 }
 
 
+#ifdef _MSC_VER
 // Finds first set bit = Counts trailing zeros
 // Emulates the BSD function
 AYMO_INLINE
 int ffsll(long long x)
 {
     unsigned long i = 0;
+#if defined(_WIN32)
+    if (_BitScanForward(&i, (uint32_t)x)) {
+        return (int)(i + 1);
+    }
+    if (_BitScanForward(&i, (uint32_t)(x >> 32))) {
+        return (int)(i + 33);
+    }
+#else
     if (_BitScanForward64(&i, (unsigned long long)x)) {
         return (int)(i + 1);
     }
+#endif
     return 0;
 }
+#endif  // _MSC_VER
 
 
 #ifdef __cplusplus
