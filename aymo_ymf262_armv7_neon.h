@@ -250,7 +250,7 @@ AYMO_ALIGN_V16
 struct aymo_(slot_group) {
     aymoi16_t wg_out;
     aymoi16_t wg_prout;
-    aymoi16_t wg_fb_shr;
+    aymoi16_t wg_fb_shs;        // signed
     aymoi16_t wg_fbmod_gate;
     aymoi16_t wg_prmod_gate;
     aymoi16_t wg_phase_shl;
@@ -303,7 +303,7 @@ struct aymo_(slot_group) {
 #endif  // AYMO_dEBUG
 };
 
-// Channel_2xOP SIMD group status  // TODO
+// Channel_2xOP SIMD group status
 // Processing order (kinda)
 AYMO_ALIGN_V16
 struct aymo_(ch2x_group) {
@@ -334,8 +334,8 @@ struct aymo_(chip) {
     aymoi16_t wg_mod;
     aymoi16_t eg_statev;
     aymoi16_t eg_add;
-    aymou16_t eg_incstep;
-    aymoi16_t pg_vib_shs;   // signed
+    aymoi16_t eg_incstep;
+    aymoi16_t pg_vib_shs;       // signed
     aymoi16_t pg_vib_sign;
 
     aymoi16_t og_acc_a;

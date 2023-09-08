@@ -21,6 +21,13 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #ifndef include_aymo_cc_h_
 #define include_aymo_cc_h_
 
+#include <stddef.h>
+
+
+#ifndef _MSC_VER
+#define __forceinline
+#define __declspec(x)
+#endif
 
 #if (defined(_DEBUG) && !defined(NDEBUG))
 #define AYMO_DEBUG

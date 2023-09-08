@@ -25,7 +25,11 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #ifdef AYMO_ARCH_IS_ARMV7_NEON
 
 #include <stdint.h>
-#include <armintr.h>
+#if defined(_MSC_VER)
+    #include <armintr.h>
+#else
+    #include <string.h>  // ffsll()
+#endif
 
 
 #ifdef __cplusplus
@@ -49,11 +53,10 @@ extern "C" {
 #define vor             vorrq_s16
 #define vxor            veorq_s16
 #define vandnot(a,b)    (vbicq_s16((b), (a)))  // ~A & B
-//#define vblendi     _mm_blend_epi16  // TODO
-#define vblendv(a,b,m)  (vbslq_s16((m), (b), (a)))  // B if M else A
+#define vblendv(a,b,m)  (vbslq_s16(vi2u(m), (b), (a)))  // B if M else A
 
-#define vcmpeq          vceqq_s16
-#define vcmpgt          vcgtq_s16
+#define vcmpeq(a, b)    (vu2i(vceqq_s16((a), (b))))
+#define vcmpgt(a, b)    (vu2i(vcgtq_s16((a), (b))))
 #define vcmpz(x)        (vcmpeq((x), vsetz()))
 #define vcmpp(x)        (vcmpgt((x), vsetz()))
 
@@ -108,13 +111,11 @@ extern "C" {
 #define wcombine        vcombine_s16
 
 
-#define vvi2u           vreinterpretq_s32_u32
-#define vvu2i           vreinterpretq_u32_s32
+#define vvi2u           vreinterpretq_u32_s32
+#define vvu2i           vreinterpretq_s32_u32
 
 #define vvsetx          vvsetz
 #define vvset1          vdupq_n_s32
-#define vvseta          vvseta_s32
-#define vvsetr          vvsetr_s32
 #define vvsetz()        (vvset1(0))
 #define vvsetf()        (vvset1(-1))
 
@@ -130,6 +131,12 @@ extern "C" {
 #define vvsllv          vshlq_s32
 
 #define vvmul           vmulq_s32
+
+#define vvextract       vgetq_lane_s32
+#define vvextractn      vvextractn_s32
+
+#define vvinsert(x,n,i) (vsetq_lane_s32((n), (x), (i)))
+#define vvinsertn       vvinsertn_s32
 
 #define vvgetlo         vget_low_s32
 #define vvgethi         vget_high_s32
@@ -331,6 +338,48 @@ int16x8_t vpow2lt4_s16(int16x8_t x)
 
 
 AYMO_INLINE
+long vvextractn_s32(int32x4_t x, const int i)
+{
+#if defined(_MSC_VER)
+    return x.n128_i32[i];
+#elif 1
+    int32_t* x_n128i_i32 = (int32_t*)(void*)&x;
+    return x_n128i_i32[i];
+#else
+    switch (i) {
+    case  0: return vvextract(x, 0);
+    case  1: return vvextract(x, 1);
+    case  2: return vvextract(x, 2);
+    case  3: return vvextract(x, 3);
+    default: return 0;
+    }
+#endif
+}
+
+
+AYMO_INLINE
+int32x4_t vvinsertn_s32(int32x4_t x, long n, const int i)
+{
+#if defined(_MSC_VER)
+    x.n128_i32[i] = n;
+    return x;
+#elif 1
+    int32_t* x_n128_i32 = (int32_t*)(void*)&x;
+    x_n128_i32[i] = n;
+    return x;
+#else
+    switch (i) {
+    case  0: return vvinsert(x, n, 0);
+    case  1: return vvinsert(x, n, 1);
+    case  2: return vvinsert(x, n, 2);
+    case  3: return vvinsert(x, n, 3);
+    default: return x;
+    }
+#endif
+}
+
+
+AYMO_INLINE
 int16_t clamp16(int x)
 {
     if (x < INT16_MIN) {
@@ -343,6 +392,7 @@ int16_t clamp16(int x)
 }
 
 
+#ifdef _MSC_VER
 // Finds first set bit = Counts trailing zeros
 // Emulates the BSD function
 AYMO_INLINE
@@ -358,6 +408,7 @@ int ffsll(long long x)
     unsigned hin = _arm_clz(hi);
     return (int)(hin + 32);
 }
+#endif  // _MSC_VER
 
 
 #ifdef __cplusplus

@@ -313,7 +313,7 @@ const int8_t aymo_(eg_kslsh_table)[4] =
 };
 
 AYMO_STATIC
-const uint16_t aymo_(eg_incstep_table)[4] =
+const int16_t aymo_(eg_incstep_table)[4] =
 {
     ((1 << 3) | (1 << 2) | (1 << 1) | (0 << 0)),
     ((1 << 3) | (0 << 2) | (0 << 1) | (0 << 0)),
@@ -447,8 +447,8 @@ void aymo_(wg_update)(
 )
 {
     // Compute feedback and modulation inputs
-    aymoi16_t fbsum = vslli(vadd(sg->wg_out, sg->wg_prout), 1);
-    aymoi16_t fbsum_sh = vsrlv(fbsum, sg->wg_fb_shr);
+    aymoi16_t fbsum = vadd(sg->wg_out, sg->wg_prout);
+    aymoi16_t fbsum_sh = vsllv(fbsum, sg->wg_fb_shs);
     aymoi16_t prmod = vand(chip->wg_mod, sg->wg_prmod_gate);
     aymoi16_t fbmod = vand(fbsum_sh, sg->wg_fbmod_gate);
     sg->wg_prout = sg->wg_out;
@@ -474,7 +474,7 @@ void aymo_(wg_update)(
     // Compute exponential output
     aymoi16_t exp_in = vblendv(phase_out, logsin_val, sg->wg_sine_gate);
     aymoi16_t exp_level = vadd(exp_in, vslli(sg->eg_out, 3));
-    exp_level = vu2i(vminu(vi2u(exp_level), vi2u(vset1(0x1FFF))));
+    exp_level = vmini(exp_level, vset1(0x1FFF));
     aymoi16_t exp_level_lo = exp_level;  // vgather() masks to low byte
     aymoi16_t exp_level_hi = vsrli(exp_level, 8);
     aymoi16_t exp_value = vgather(aymo_(exp_x2_table), exp_level_lo);
@@ -530,17 +530,17 @@ void aymo_(eg_update)(
     aymoi16_t rate = vadd(sg->eg_ks, rate_temp);
     aymoi16_t rate_lo = vand(rate, vset1(3));
     aymoi16_t rate_hi = vsrli(rate, 2);
-    rate_hi = vminu(rate_hi, vset1(15));
+    rate_hi = vmini(rate_hi, vset1(15));
 
     // Compute shift
     aymoi16_t eg_shift = vadd(rate_hi, chip->eg_add);
     aymoi16_t rate_pre_lt12 = vor(vslli(rate_lo, 1), vset1(8));
-    aymoi16_t shift_lt12 = vsrlv(rate_pre_lt12, vsubsu(vset1(15), eg_shift));
+    aymoi16_t shift_lt12 = vsrlv(rate_pre_lt12, vu2i(vsubsu(vi2u(vset1(15)), vi2u(eg_shift))));
     shift_lt12 = vand(shift_lt12, chip->eg_statev);
 
     aymoi16_t incstep_ge12 = vand(vsrlv(chip->eg_incstep, rate_lo), vset1(1));
     aymoi16_t shift_ge12 = vadd(vand(rate_hi, vset1(3)), incstep_ge12);
-    shift_ge12 = vminu(shift_ge12, vset1(3));
+    shift_ge12 = vmini(shift_ge12, vset1(3));
     shift_ge12 = vblendv(shift_ge12, chip->eg_statev, vcmpz(shift_ge12));
 
     aymoi16_t shift = vblendv(shift_lt12, shift_ge12, vcmpgt(rate_hi, vset1(11)));
@@ -851,8 +851,8 @@ void aymo_(tm_update)(struct aymo_(chip)* chip)
     }
 
     chip->tm_timer++;
-    uint16_t eg_incstep = aymo_(eg_incstep_table)[chip->tm_timer & 3];
-    chip->eg_incstep = vi2u(vset1((int16_t)eg_incstep));
+    int16_t eg_incstep = aymo_(eg_incstep_table)[chip->tm_timer & 3];
+    chip->eg_incstep = vset1(eg_incstep);
 
     // Update timed envelope patterns
     int16_t eg_shift = (int16_t)ffsll((long long)chip->eg_timer);
@@ -1649,7 +1649,7 @@ void aymo_(write_C0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     int sgi1 = (ch2x_word1 / AYMO_(SLOT_GROUP_LENGTH));
     struct aymo_(slot_group)* sg0 = &chip->sg[sgi0];
     struct aymo_(slot_group)* sg1 = &chip->sg[sgi1];
-    int cgi = (sgi0 / 2);
+    int cgi = aymo_(sgi_to_cgi)(sgi0);
     struct aymo_(ch2x_group)* cg = &chip->cg[cgi];
 
     if (reg_C0h->cha != reg_C0h_prev.cha) {
@@ -1674,9 +1674,9 @@ void aymo_(write_C0h)(struct aymo_(chip)* chip, uint16_t address, uint8_t value)
     }
 
     if (reg_C0h->fb != reg_C0h_prev.fb) {
-        int16_t fb_shr = (reg_C0h->fb ? (9 - reg_C0h->fb) : 16);
-        sg0->wg_fb_shr = vinsertn(sg0->wg_fb_shr, fb_shr, sgo);
-        sg1->wg_fb_shr = vinsertn(sg1->wg_fb_shr, fb_shr, sgo);
+        int16_t fb_shs = (reg_C0h->fb ? -(int16_t)(9 - reg_C0h->fb) : 16);
+        sg0->wg_fb_shs = vinsertn(sg0->wg_fb_shs, fb_shs, sgo);
+        sg1->wg_fb_shs = vinsertn(sg1->wg_fb_shs, fb_shs, sgo);
     }
 
     if (chip->chip_regs.reg_105h.stereo) {
@@ -1825,6 +1825,7 @@ void aymo_(init)(struct aymo_(chip)* chip)
     // Initialize slots
     for (int sgi = 0; sgi < AYMO_(SLOT_GROUP_NUM); ++sgi) {
         struct aymo_(slot_group)* sg = &(chip->sg[sgi]);
+        sg->wg_fb_shs = vset1(16);
         sg->eg_rout = vset1(0x01FF);
         sg->eg_out = vset1(0x01FF);
         sg->eg_gen = vset1(AYMO_(EG_GEN_RELEASE));

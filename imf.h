@@ -1,6 +1,7 @@
 #ifndef include_imf_h_
 #define include_imf_h_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus

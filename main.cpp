@@ -19,7 +19,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "aymo_cc.h"
-#if defined(AYMO_ARCH_IS_X86_SE41)
+#if defined(AYMO_ARCH_IS_X86_SSE41)
     #include "aymo_ymf262_x86_sse41.h"
     #include "aymo_arch_x86_sse41_macros.h"
 #elif defined(AYMO_ARCH_IS_X86_AVX2)
@@ -34,7 +34,7 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #include "opl3.h"
 #include "regdump.h"
 
-//#include <cassert>
+#include <cassert>
 #include <chrono>
 #include <cstdlib>
 #include <cstdio>
@@ -45,10 +45,14 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 
 #ifndef assert
     #ifdef AYMO_DEBUG
-        #define assert(c) { if (!(c)) { __debugbreak(); } }
+        #define assert(c)   { if (!(c)) { __debugbreak(); } }
     #else
         #define assert(c)
     #endif
+#endif
+
+#ifndef _MSC_VER
+    #define printf_s    printf
 #endif
 
 
@@ -87,6 +91,7 @@ static const uint8_t mt[16] = {
 
 void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip, int slot_)
 {
+#ifdef AYMO_DEBUG
     if (slot_ >= 36) {
         return;
     }
@@ -94,7 +99,7 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     int word = aymo_(slot_to_word)[slot_];
     int sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
     int sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
-#ifdef include_aymo_arch_x86_sse41_h_
+#if (AYMO_(SLOT_GROUP_LENGTH) == 8)
     int cgi = (((sgi / 4) * 2) | (sgi % 2));
 #else
     int cgi = (sgi / 2);
@@ -107,7 +112,7 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     // TODO: Commented stuff
     assert(vextractn(sg->wg_out, sgo) == slot->out);
 #if defined(AYMO_ARCH_IS_ARMV7_NEON)
-    assert(vextractn(sg->wg_fb_shr, sgo) == (slot->channel->fb ? (9 - slot->channel->fb) : 0));
+    assert(vextractn(sg->wg_fb_shr, sgo) == (slot->channel->fb ? -(int16_t)(9 - slot->channel->fb) : 16));
 #else
     assert(vextractn(sg->wg_fb_mulhi, sgo) == (slot->channel->fb ? (0x40 << slot->channel->fb) : 0));
 #endif
@@ -136,19 +141,21 @@ void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     const int sgo_side[16] = { 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1 };
     const int sgo_cell[16] = { 0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7 };
 #if defined(AYMO_ARCH_IS_X86_SSE41)
-    uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m128i_u32 : sg->pg_phase_lo.m128i_u32)[sgo_cell[sgo]];
+    uint32_t pg_phase = vvextractn(sgo_side[sgo] ? sg->pg_phase_hi : sg->pg_phase_lo), sgo_cell[sgo]);
 #elif defined(AYMO_ARCH_IS_X86_AVX2)
-    uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.m256i_u32 : sg->pg_phase_lo.m256i_u32)[sgo_cell[sgo]];
+    uint32_t pg_phase = vvextractn(sgo_side[sgo] ? sg->pg_phase_hi : sg->pg_phase_lo), sgo_cell[sgo]);
 #elif defined(AYMO_ARCH_IS_ARMV7_NEON)
-    uint32_t pg_phase = (sgo_side[sgo] ? sg->pg_phase_hi.n128_u32 : sg->pg_phase_lo.n128_u32)[sgo_cell[sgo]];
+    uint32_t pg_phase = vvextractn(sgo_side[sgo] ? sg->pg_phase_hi : sg->pg_phase_lo), sgo_cell[sgo]);
 #endif
     assert(pg_phase == slot->pg_phase);
     assert((uint16_t)vextractn(sg->pg_phase_out, sgo) == slot->pg_phase_out);
+#endif  // AYMO_DEBUG
 }
 
 
 void compare_ch2xs(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip, int ch2x)
 {
+#ifdef AYMO_DEBUG
     if (ch2x >= 18) {
         return;
     }
@@ -156,7 +163,7 @@ void compare_ch2xs(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     int word = aymo_(ch2x_to_word)[ch2x][0];
     int sgi = (word / AYMO_(SLOT_GROUP_LENGTH));
     int sgo = (word % AYMO_(SLOT_GROUP_LENGTH));
-#ifdef include_aymo_arch_x86_sse41_h_
+#if (AYMO_(SLOT_GROUP_LENGTH) == 8)
     int cgi = (((sgi / 4) * 2) | (sgi % 2));
 #else
     int cgi = (sgi / 2);
@@ -182,11 +189,13 @@ void compare_ch2xs(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     assert((uint16_t)vextractn(cg->og_ch_gate_b, sgo) == channel->chb);
     assert((uint16_t)vextractn(cg->og_ch_gate_c, sgo) == channel->chc);
     assert((uint16_t)vextractn(cg->og_ch_gate_d, sgo) == channel->chd);
+#endif  // AYMO_DEBUG
 }
 
 
 void compare_chips(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip)
 {
+#ifdef AYMO_DEBUG
     // TODO: Commented stuff
     assert((uint16_t)aymo_chip->tm_timer == nuked_chip->timer);
     assert((aymo_chip->eg_timer & AYMO_(EG_TIMER_MASK)) == nuked_chip->eg_timer);
@@ -220,6 +229,7 @@ void compare_chips(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_c
     for (int slot = 0; slot < 36; ++slot) {
         compare_slots(aymo_chip, nuked_chip, slot);
     }
+#endif  // AYMO_DEBUG
 }
 
 
@@ -388,7 +398,7 @@ void regdump_test_file(void)
 
     struct regdump_cmd cmd = { 0, 0, 1 };
     while (cmd.delaying < 2) {
-        compare_chips(&aymo_chip, &nuked_chip);
+        //compare_chips(&aymo_chip, &nuked_chip);
         cmd = regdump_opl_tick(&regdump_status);
         if (cmd.address) {
             //printf_s("@ 0x%04X 0x%02X\n", cmd.address, cmd.value);
