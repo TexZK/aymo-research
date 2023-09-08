@@ -24,7 +24,6 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #include "aymo_cc.h"
 #ifdef AYMO_ARCH_IS_ARMV7_NEON
 
-#include <intrin.h>
 #include <arm_neon.h>
 
 
