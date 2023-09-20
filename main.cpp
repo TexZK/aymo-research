@@ -60,6 +60,8 @@ static struct aymo_(chip) aymo_chip;
 static opl3_chip nuked_chip;
 
 
+#ifdef AYMO_DEBUG
+
 const int8_t aymo_(slot_to_word)[AYMO_(SLOT_NUM_MAX)] =
 {
      0,  1,  2, 16, 17, 18, 32, 33,
@@ -87,6 +89,8 @@ const int8_t aymo_(ch2x_to_word)[AYMO_(SLOT_NUM_MAX) / 2][2/* slot */] =
 static const uint8_t mt[16] = {
     1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 20, 24, 24, 30, 30
 };
+
+#endif  // AYMO_DEBUG
 
 
 void compare_slots(const struct aymo_(chip)* aymo_chip, const opl3_chip* nuked_chip, int slot_)

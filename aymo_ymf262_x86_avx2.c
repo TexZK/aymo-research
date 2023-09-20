@@ -357,7 +357,7 @@ const struct aymo_(conn) aymo_(conn_ch4x_table)[4/* cnt */][4/* slot */] =
 {
     {
         { -1,   0,   0 },
-        {  0,  -1,  -0 },
+        {  0,  -1,   0 },
         {  0,  -1,   0 },
         {  0,  -1,  -1 }
     },
