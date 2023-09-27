@@ -175,7 +175,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>AYMO_ARCH_IS_X86_AVX2;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AYMO_ARCH_IS_X86_AVX2_;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
@@ -190,7 +190,7 @@
       <FunctionLevelLinking>false</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>AYMO_ARCH_IS_X86_AVX2;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>AYMO_ARCH_IS_X86_AVX2_;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <CompileAsManaged>false</CompileAsManaged>
@@ -217,12 +217,14 @@
   <ItemGroup>
     <ClInclude Include="aymo_arch_armv7_neon.h" />
     <ClInclude Include="aymo_arch_armv7_neon_macros.h" />
+    <ClInclude Include="aymo_arch_none_none_macros.h" />
     <ClInclude Include="aymo_arch_x86_avx2.h" />
     <ClInclude Include="aymo_arch_x86_avx2_macros.h" />
     <ClInclude Include="aymo_arch_x86_sse41.h" />
     <ClInclude Include="aymo_arch_x86_sse41_macros.h" />
     <ClInclude Include="aymo_cc.h" />
     <ClInclude Include="aymo_ymf262_armv7_neon.h" />
+    <ClInclude Include="aymo_ymf262_none_none.h" />
     <ClInclude Include="aymo_ymf262_x86_avx2.h" />
     <ClInclude Include="aymo_ymf262_x86_sse41.h" />
     <ClInclude Include="imf.h" />
@@ -231,6 +233,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aymo_ymf262_armv7_neon.c" />
+    <ClCompile Include="aymo_ymf262_none_none.c" />
     <ClCompile Include="aymo_ymf262_x86_avx2.c" />
     <ClCompile Include="aymo_ymf262_x86_sse41.c" />
     <ClCompile Include="imf.c" />

@@ -28,6 +28,9 @@ along with AYMO. If not, see <https://www.gnu.org/licenses/>.
 #elif defined(AYMO_ARCH_IS_ARMV7_NEON)
     #include "aymo_ymf262_armv7_neon.h"
     #include "aymo_arch_armv7_neon_macros.h"
+#else
+    #include "aymo_ymf262_none_none.h"
+    #include "aymo_arch_none_none_macros.h"
 #endif
 
 #include "imf.h"
